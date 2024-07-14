@@ -1,20 +1,75 @@
-# 🛍️ Inventory tracker template
+# X-ray Image Management Application
 
-A Streamlit app showing how to use `st.data_editor` to read and modify a database. Behind the scenes
-this uses a simple SQLite database, but you can easily replace it with whatever your favorite DB is.
+This is a Streamlit-based application for uploading, labeling, and managing X-ray images. Users can upload images, assign specific labels, and search for images based on various criteria. Additionally, users can download the search results as a ZIP file.
 
-[![Open in Streamlit](https://static.streamlit.io/badges/streamlit_badge_black_white.svg)](https://inventory-tracker-template.streamlit.app/)
+## Features
 
-### How to run it on your own machine
+- Upload X-ray images with specific labels.
+- Search images based on type, view, main region, and sub-region.
+- Download search results as a ZIP file.
+- Track the percentage of image counts by categories.
 
-1. Install the requirements
+## Requirements
 
-   ```
-   $ pip install -r requirements.txt
-   ```
+- Python 3.7+
+- Streamlit
+- Pillow
 
-2. Run the app
+## Installation
 
-   ```
-   $ streamlit run streamlit_app.py
-   ```
+1. **Clone the repository:**
+
+    ```bash
+    git clone https://github.com/yourusername/x-ray-image-management.git
+    cd x-ray-image-management
+    ```
+
+2. **Create a virtual environment and activate it:**
+
+    ```bash
+    python -m venv venv
+    source venv/bin/activate   # On Windows use `venv\Scripts\activate`
+    ```
+
+3. **Install the required dependencies:**
+
+    ```bash
+    pip install -r requirements.txt
+    ```
+
+## Usage
+
+1. **Run the Streamlit application:**
+
+    ```bash
+    streamlit run app.py
+    ```
+
+2. **Open your web browser and navigate to:**
+
+    ```
+    http://localhost:8501
+    ```
+
+3. **Upload Images:**
+
+    - Enter the patient ID (leave empty for new patients).
+    - Select an image to upload.
+    - Choose the type, view, main region, and sub-region.
+    - Optionally, enter the patient's age and any comments.
+    - Click the "Upload" button to save the image and its details.
+
+4. **Search Images:**
+
+    - Enter labels to search for (comma-separated).
+    - Choose the type, view, main region, and sub-region to filter results.
+    - Click the "Search" button to display the matching images.
+    - Optionally, download the search results as a ZIP file.
+
+## Database
+
+- The application uses SQLite for storing image metadata.
+- Images are saved in the `images` directory.
+
+## File Structure
+
