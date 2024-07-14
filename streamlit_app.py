@@ -1,290 +1,250 @@
-from collections import defaultdict
-from pathlib import Path
-import sqlite3
-
 import streamlit as st
-import altair as alt
-import pandas as pd
+import sqlite3
+from sqlite3 import Error
+import os
+from PIL import Image
+import shutil
+import uuid
 
+# Ellenőrizzük, hogy az 'images' mappa létezik-e, ha nem, hozzuk létre
+if not os.path.exists("images"):
+    os.makedirs("images")
 
-# Set the title and favicon that appear in the Browser's tab bar.
-st.set_page_config(
-    page_title="Inventory tracker",
-    page_icon=":shopping_bags:",  # This is an emoji shortcode. Could be a URL too.
-)
-
-
-# -----------------------------------------------------------------------------
-# Declare some useful functions.
-
-
-def connect_db():
-    """Connects to the sqlite database."""
-
-    DB_FILENAME = Path(__file__).parent / "inventory.db"
-    db_already_exists = DB_FILENAME.exists()
-
-    conn = sqlite3.connect(DB_FILENAME)
-    db_was_just_created = not db_already_exists
-
-    return conn, db_was_just_created
-
-
-def initialize_data(conn):
-    """Initializes the inventory table with some data."""
-    cursor = conn.cursor()
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS inventory (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            item_name TEXT,
-            price REAL,
-            units_sold INTEGER,
-            units_left INTEGER,
-            cost_price REAL,
-            reorder_point INTEGER,
-            description TEXT
-        )
-        """
-    )
-
-    cursor.execute(
-        """
-        INSERT INTO inventory
-            (item_name, price, units_sold, units_left, cost_price, reorder_point, description)
-        VALUES
-            -- Beverages
-            ('Bottled Water (500ml)', 1.50, 115, 15, 0.80, 16, 'Hydrating bottled water'),
-            ('Soda (355ml)', 2.00, 93, 8, 1.20, 10, 'Carbonated soft drink'),
-            ('Energy Drink (250ml)', 2.50, 12, 18, 1.50, 8, 'High-caffeine energy drink'),
-            ('Coffee (hot, large)', 2.75, 11, 14, 1.80, 5, 'Freshly brewed hot coffee'),
-            ('Juice (200ml)', 2.25, 11, 9, 1.30, 5, 'Fruit juice blend'),
-
-            -- Snacks
-            ('Potato Chips (small)', 2.00, 34, 16, 1.00, 10, 'Salted and crispy potato chips'),
-            ('Candy Bar', 1.50, 6, 19, 0.80, 15, 'Chocolate and candy bar'),
-            ('Granola Bar', 2.25, 3, 12, 1.30, 8, 'Healthy and nutritious granola bar'),
-            ('Cookies (pack of 6)', 2.50, 8, 8, 1.50, 5, 'Soft and chewy cookies'),
-            ('Fruit Snack Pack', 1.75, 5, 10, 1.00, 8, 'Assortment of dried fruits and nuts'),
-
-            -- Personal Care
-            ('Toothpaste', 3.50, 1, 9, 2.00, 5, 'Minty toothpaste for oral hygiene'),
-            ('Hand Sanitizer (small)', 2.00, 2, 13, 1.20, 8, 'Small sanitizer bottle for on-the-go'),
-            ('Pain Relievers (pack)', 5.00, 1, 5, 3.00, 3, 'Over-the-counter pain relief medication'),
-            ('Bandages (box)', 3.00, 0, 10, 2.00, 5, 'Box of adhesive bandages for minor cuts'),
-            ('Sunscreen (small)', 5.50, 6, 5, 3.50, 3, 'Small bottle of sunscreen for sun protection'),
-
-            -- Household
-            ('Batteries (AA, pack of 4)', 4.00, 1, 5, 2.50, 3, 'Pack of 4 AA batteries'),
-            ('Light Bulbs (LED, 2-pack)', 6.00, 3, 3, 4.00, 2, 'Energy-efficient LED light bulbs'),
-            ('Trash Bags (small, 10-pack)', 3.00, 5, 10, 2.00, 5, 'Small trash bags for everyday use'),
-            ('Paper Towels (single roll)', 2.50, 3, 8, 1.50, 5, 'Single roll of paper towels'),
-            ('Multi-Surface Cleaner', 4.50, 2, 5, 3.00, 3, 'All-purpose cleaning spray'),
-
-            -- Others
-            ('Lottery Tickets', 2.00, 17, 20, 1.50, 10, 'Assorted lottery tickets'),
-            ('Newspaper', 1.50, 22, 20, 1.00, 5, 'Daily newspaper')
-        """
-    )
-    conn.commit()
-
-
-def load_data(conn):
-    """Loads the inventory data from the database."""
-    cursor = conn.cursor()
-
+# SQLite adatbázis létrehozása
+def create_connection(db_file):
     try:
-        cursor.execute("SELECT * FROM inventory")
-        data = cursor.fetchall()
-    except:
+        conn = sqlite3.connect(db_file)
+        return conn
+    except Error as e:
+        st.error(f"Error creating connection: {e}")
         return None
 
-    df = pd.DataFrame(
-        data,
-        columns=[
-            "id",
-            "item_name",
-            "price",
-            "units_sold",
-            "units_left",
-            "cost_price",
-            "reorder_point",
-            "description",
-        ],
-    )
+def create_table(conn):
+    try:
+        sql_create_images_table = """CREATE TABLE IF NOT EXISTS images (
+                                        id integer PRIMARY KEY,
+                                        patient_id text NOT NULL,
+                                        filename text NOT NULL,
+                                        type text,
+                                        view text,
+                                        main_region text,
+                                        sub_region text,
+                                        age integer,
+                                        comment text
+                                    );"""
+        cur = conn.cursor()
+        cur.execute(sql_create_images_table)
+        conn.commit()
+    except Error as e:
+        st.error(f"Error creating table: {e}")
 
-    return df
+def check_database(conn):
+    try:
+        cur = conn.cursor()
+        cur.execute("SELECT name FROM sqlite_master WHERE type='table' AND name='images';")
+        table_exists = cur.fetchone()
+        return table_exists is not None
+    except Error as e:
+        st.error(f"Error checking database: {e}")
+        return False
 
+def initialize_database():
+    if os.path.exists(database):
+        conn = create_connection(database)
+        if conn:
+            if not check_database(conn):
+                conn.close()
+                st.info("Existing database seems to be corrupted. Renaming the old database and creating a new one.")
+                shutil.move(database, f"{database}.backup")
+                conn = create_connection(database)
+                if conn:
+                    create_table(conn)
+                    conn.close()
+            else:
+                conn.close()
+        else:
+            st.error("Error! Cannot create the database connection.")
+    else:
+        conn = create_connection(database)
+        if conn:
+            create_table(conn)
+            conn.close()
 
-def update_data(conn, df, changes):
-    """Updates the inventory data in the database."""
-    cursor = conn.cursor()
+database = "images.db"
+initialize_database()
 
-    if changes["edited_rows"]:
-        deltas = st.session_state.inventory_table["edited_rows"]
-        rows = []
+# Egyedi beteg azonosító létrehozása
+def generate_patient_id():
+    return str(uuid.uuid4())
 
-        for i, delta in deltas.items():
-            row_dict = df.iloc[i].to_dict()
-            row_dict.update(delta)
-            rows.append(row_dict)
+# Kép mentése
+def save_image(patient_id, file, type, view, main_region, sub_region, age, comment):
+    filename = file.name
+    file_path = os.path.join("images", filename)
+    try:
+        with open(file_path, "wb") as f:
+            f.write(file.getbuffer())
+        conn = create_connection(database)
+        if conn:
+            try:
+                sql = '''INSERT INTO images(patient_id, filename, type, view, main_region, sub_region, age, comment)
+                         VALUES(?,?,?,?,?,?,?,?)'''
+                cur = conn.cursor()
+                cur.execute(sql, (patient_id, filename, type, view, main_region, sub_region, age, comment))
+                conn.commit()
+            except Error as e:
+                st.error(f"Error saving image data to database: {e}")
+            finally:
+                conn.close()
+    except PermissionError as e:
+        st.error(f"Permission error: {e}")
+    except Exception as e:
+        st.error(f"Unexpected error: {e}")
 
-        cursor.executemany(
-            """
-            UPDATE inventory
-            SET
-                item_name = :item_name,
-                price = :price,
-                units_sold = :units_sold,
-                units_left = :units_left,
-                cost_price = :cost_price,
-                reorder_point = :reorder_point,
-                description = :description
-            WHERE id = :id
-            """,
-            rows,
-        )
+# Streamlit alkalmazás
+st.title("Kép feltöltése és címkézése")
 
-    if changes["added_rows"]:
-        cursor.executemany(
-            """
-            INSERT INTO inventory
-                (id, item_name, price, units_sold, units_left, cost_price, reorder_point, description)
-            VALUES
-                (:id, :item_name, :price, :units_sold, :units_left, :cost_price, :reorder_point, :description)
-            """,
-            (defaultdict(lambda: None, row) for row in changes["added_rows"]),
-        )
+# Beteg azonosító létrehozása vagy kiválasztása
+patient_id = st.text_input("Beteg azonosító (hagyja üresen új beteg esetén)", generate_patient_id())
 
-    if changes["deleted_rows"]:
-        cursor.executemany(
-            "DELETE FROM inventory WHERE id = :id",
-            ({"id": int(df.loc[i, "id"])} for i in changes["deleted_rows"]),
-        )
+uploaded_file = st.file_uploader("Válassz egy képet", type=["jpg", "jpeg", "png"])
 
-    conn.commit()
+# Típus kiválasztása
+type = st.selectbox("Típus", ["Törött", "Normál", "Egyéb"])
+if type == "Egyéb":
+    type_comment = st.text_input("Specifikálás (Egyéb)")
+else:
+    type_comment = ""
 
+# Nézet kiválasztása
+view = st.selectbox("Nézet", ["AP", "Lateral", "Egyéb"])
 
-# -----------------------------------------------------------------------------
-# Draw the actual page, starting with the inventory table.
+# Fő régió kiválasztása
+main_region = st.selectbox("Fő régió", ["Felső végtag", "Alsó végtag", "Gerinc", "Koponya"])
 
-# Set the title that appears at the top of the page.
-"""
-# :shopping_bags: Inventory tracker
+# Alrégió kiválasztása
+if main_region == "Felső végtag":
+    sub_region = st.selectbox("Alrégió", ["Váll", "Felkar", "Könyök", "Alkar", "Csukló", "Kéz"])
+elif main_region == "Alsó végtag":
+    sub_region = st.selectbox("Alrégió", ["Csípő", "Comb", "Térd", "Lábszár", "Boka", "Láb"])
+elif main_region == "Gerinc":
+    sub_region = st.selectbox("Alrégió", ["Nyaki", "Háti", "Ágyéki"])
+elif main_region == "Koponya":
+    sub_region = st.selectbox("Alrégió", ["Elülső", "Hátsó", "Oldalsó"])
+else:
+    sub_region = ""
 
-**Welcome to Alice's Corner Store's intentory tracker!**
-This page reads and writes directly from/to our inventory database.
-"""
+age = st.number_input("Életkor", min_value=0, max_value=120, step=1, format="%d", key="age", value=0)
+comment = st.text_area("Megjegyzés", key="comment", value="")
 
-st.info(
-    """
-    Use the table below to add, remove, and edit items.
-    And don't forget to commit your changes when you're done.
-    """
-)
+if st.button("Feltöltés"):
+    if uploaded_file and type and view and main_region and sub_region:
+        try:
+            save_image(patient_id, uploaded_file, type, view, main_region, sub_region, age, comment + " " + type_comment)
+            st.success("Kép sikeresen feltöltve!")
+        except Exception as e:
+            st.error(f"Hiba a kép mentésekor: {e}")
+    else:
+        st.error("Tölts fel egy képet és add meg a szükséges információkat.")
 
-# Connect to database and create table if needed
-conn, db_was_just_created = connect_db()
+# Keresés és megjelenítés
+st.header("Képek keresése")
+search_labels = st.text_input("Keresés címkék alapján (vesszővel elválasztva)")
 
-# Initialize data.
-if db_was_just_created:
-    initialize_data(conn)
-    st.toast("Database initialized with some sample data.")
+# Típus kiválasztása kereséshez
+search_type = st.selectbox("Típus keresése", ["", "Törött", "Normál"])
 
-# Load data from database
-df = load_data(conn)
+# Nézet kiválasztása kereséshez
+search_view = st.selectbox("Nézet keresése", ["", "AP", "Lateral"])
 
-# Display data with editable table
-edited_df = st.data_editor(
-    df,
-    disabled=["id"],  # Don't allow editing the 'id' column.
-    num_rows="dynamic",  # Allow appending/deleting rows.
-    column_config={
-        # Show dollar sign before price columns.
-        "price": st.column_config.NumberColumn(format="$%.2f"),
-        "cost_price": st.column_config.NumberColumn(format="$%.2f"),
-    },
-    key="inventory_table",
-)
+# Fő régió kiválasztása kereséshez
+search_main_region = st.selectbox("Fő régió keresése", ["", "Felső végtag", "Alsó végtag", "Gerinc", "Koponya"])
 
-has_uncommitted_changes = any(len(v) for v in st.session_state.inventory_table.values())
+# Alrégió kiválasztása kereséshez
+if search_main_region == "Felső végtag":
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Váll", "Felkar", "Könyök", "Alkar", "Csukló", "Kéz"])
+elif search_main_region == "Alsó végtag":
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Csípő", "Comb", "Térd", "Lábszár", "Boka", "Láb"])
+elif search_main_region == "Gerinc":
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Nyaki", "Háti", "Ágyéki"])
+elif search_main_region == "Koponya":
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Elülső", "Hátsó", "Oldalsó"])
+else:
+    search_sub_region = ""
 
-st.button(
-    "Commit changes",
-    type="primary",
-    disabled=not has_uncommitted_changes,
-    # Update data in database
-    on_click=update_data,
-    args=(conn, df, st.session_state.inventory_table),
-)
+if st.button("Keresés"):
+    conn = create_connection(database)
+    if conn:
+        try:
+            cur = conn.cursor()
+            query = "SELECT filename, type, view, main_region, sub_region FROM images WHERE 1=1"
+            values = []
+            if search_labels:
+                for label in search_labels.split(","):
+                    query += " AND (type LIKE ? OR view LIKE ? OR main_region LIKE ? OR sub_region LIKE ?)"
+                    values.extend([f"%{label.strip()}%", f"%{label.strip()}%", f"%{label.strip()}%", f"%{label.strip()}%"])
+            if search_type:
+                query += " AND type = ?"
+                values.append(search_type)
+            if search_view:
+                query += " AND view = ?"
+                values.append(search_view)
+            if search_main_region:
+                query += " AND main_region = ?"
+                values.append(search_main_region)
+            if search_sub_region:
+                query += " AND sub_region = ?"
+                values.append(search_sub_region)
 
+            cur.execute(query, values)
+            rows = cur.fetchall()
+            for i, row in enumerate(rows[:10]):  # Csak az első 10 kép megjelenítése
+                st.image(os.path.join("images", row[0]), caption=f"{row[1]}, {row[2]}, {row[3]}, {row[4]}")
+            if len(rows) > 10:
+                st.info(f"Összesen {len(rows)} kép található. Kérjük, szűkítse a keresést.")
+        except Error as e:
+            st.error(f"Hiba a keresés közben: {e}")
+        finally:
+            conn.close()
+    else:
+        st.error("Cannot connect to the database.")
 
-# -----------------------------------------------------------------------------
-# Now some cool charts
+# Számláló készítése
+def get_counts(conn):
+    counts = {
+        "Felső végtag": {"Váll": {}, "Felkar": {}, "Könyök": {}, "Alkar": {}, "Csukló": {}, "Kéz": {}},
+        "Alsó végtag": {"Csípő": {}, "Comb": {}, "Térd": {}, "Lábszár": {}, "Boka": {}, "Láb": {}},
+        "Gerinc": {"Nyaki": {}, "Háti": {}, "Ágyéki": {}},
+        "Koponya": {"Elülső": {}, "Hátsó": {}, "Oldalsó": {}}
+    }
+    views = ["AP", "Lateral"]
+    types = ["Normál", "Törött"]
 
-# Add some space
-""
-""
-""
+    for main_region in counts:
+        for sub_region in counts[main_region]:
+            for view in views:
+                for type in types:
+                    cur = conn.cursor()
+                    cur.execute(f"SELECT COUNT(*) FROM images WHERE main_region=? AND sub_region=? AND view=? AND type=?", 
+                                (main_region, sub_region, view, type))
+                    count = cur.fetchone()[0]
+                    total = 50  # Maximum 50 kép szükséges minden kombinációból
+                    percentage = (count / total) * 100
+                    counts[main_region][sub_region][f"{type}_{view}"] = percentage
 
-st.subheader("Units left", divider="red")
+    return counts
 
-need_to_reorder = df[df["units_left"] < df["reorder_point"]].loc[:, "item_name"]
-
-if len(need_to_reorder) > 0:
-    items = "\n".join(f"* {name}" for name in need_to_reorder)
-
-    st.error(f"We're running dangerously low on the items below:\n {items}")
-
-""
-""
-
-st.altair_chart(
-    # Layer 1: Bar chart.
-    alt.Chart(df)
-    .mark_bar(
-        orient="horizontal",
-    )
-    .encode(
-        x="units_left",
-        y="item_name",
-    )
-    # Layer 2: Chart showing the reorder point.
-    + alt.Chart(df)
-    .mark_point(
-        shape="diamond",
-        filled=True,
-        size=50,
-        color="salmon",
-        opacity=1,
-    )
-    .encode(
-        x="reorder_point",
-        y="item_name",
-    ),
-    use_container_width=True,
-)
-
-st.caption("NOTE: The :diamonds: location shows the reorder point.")
-
-""
-""
-""
-
-# -----------------------------------------------------------------------------
-
-st.subheader("Best sellers", divider="orange")
-
-""
-""
-
-st.altair_chart(
-    alt.Chart(df)
-    .mark_bar(orient="horizontal")
-    .encode(
-        x="units_sold",
-        y=alt.Y("item_name").sort("-x"),
-    ),
-    use_container_width=True,
-)
+conn = create_connection(database)
+if conn:
+    counts = get_counts(conn)
+    for main_region, sub_regions in counts.items():
+        st.subheader(main_region)
+        for sub_region, view_types in sub_regions.items():
+            st.text(sub_region)
+            cols = st.columns(2)  # Csak az AP és Lateral nézeteket jelenítjük meg
+            for i, (view_type, percentage) in enumerate(view_types.items()):
+                color = "normal" if percentage >= 100 else "inverse"
+                cols[i % 2].metric(view_type, f"{percentage:.2f}%", delta_color=color)
+    conn.close()
+else:
+    st.error("Cannot connect to the database.")
