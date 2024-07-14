@@ -5,6 +5,8 @@ import os
 from PIL import Image
 import shutil
 import uuid
+import io
+import zipfile
 
 # Ellenőrizzük, hogy az 'images' mappa létezik-e, ha nem, hozzuk létre
 if not os.path.exists("images"):
@@ -101,6 +103,16 @@ def save_image(patient_id, file, type, view, main_region, sub_region, age, comme
     except Exception as e:
         st.error(f"Unexpected error: {e}")
 
+# Képek ZIP-be csomagolása
+def create_zip(files):
+    zip_buffer = io.BytesIO()
+    with zipfile.ZipFile(zip_buffer, "w", zipfile.ZIP_DEFLATED) as zip_file:
+        for file_path in files:
+            arcname = os.path.basename(file_path)
+            zip_file.write(file_path, arcname)
+    zip_buffer.seek(0)
+    return zip_buffer
+
 # Streamlit alkalmazás
 st.title("Kép feltöltése és címkézése")
 
@@ -128,7 +140,7 @@ main_region = st.selectbox("Fő régió", ["Felső végtag", "Alsó végtag", "G
 
 # Alrégió kiválasztása
 if main_region == "Felső végtag":
-    sub_region = st.selectbox("Alrégió", ["Váll", "Felkar", "Könyök", "Alkar", "Csukló", "Kéz", "Clavicula", "Scapula", "Ulna", "Radius"])
+    sub_region = st.selectbox("Alrégió", ["Clavicula", "Scapula", "Váll", "Felkar", "Könyök", "Radius", "Ulna", "Csukló", "Kéz"])
 elif main_region == "Alsó végtag":
     sub_region = st.selectbox("Alrégió", ["Csípő", "Comb", "Térd", "Tibia", "Fibula", "Boka", "Láb"])
 elif main_region == "Gerinc":
@@ -138,7 +150,7 @@ elif main_region == "Koponya":
 else:
     sub_region = ""
 
-age = st.number_input("Életkor", min_value=0, max_value=120, step=1, format="%d", key="age", value=0)
+age = st.slider("Életkor", min_value=0, max_value=120, step=1, format="%d", value=0)
 comment = st.text_area("Megjegyzés", key="comment", value="")
 
 if st.button("Feltöltés"):
@@ -167,7 +179,7 @@ search_main_region = st.selectbox("Fő régió keresése", ["", "Felső végtag"
 
 # Alrégió kiválasztása kereséshez
 if search_main_region == "Felső végtag":
-    search_sub_region = st.selectbox("Alrégió keresése", ["", "Váll", "Felkar", "Könyök", "Alkar", "Csukló", "Kéz", "Clavicula", "Scapula", "Ulna", "Radius"])
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Clavicula", "Scapula", "Váll", "Felkar", "Könyök", "Radius", "Ulna", "Csukló", "Kéz"])
 elif search_main_region == "Alsó végtag":
     search_sub_region = st.selectbox("Alrégió keresése", ["", "Csípő", "Comb", "Térd", "Tibia", "Fibula", "Boka", "Láb"])
 elif search_main_region == "Gerinc":
@@ -203,10 +215,20 @@ if st.button("Keresés"):
 
             cur.execute(query, values)
             rows = cur.fetchall()
+            file_paths = [os.path.join("images", row[0]) for row in rows]
             for i, row in enumerate(rows[:10]):  # Csak az első 10 kép megjelenítése
                 st.image(os.path.join("images", row[0]), caption=f"{row[1]}, {row[2]}, {row[3]}, {row[4]}")
             if len(rows) > 10:
                 st.info(f"Összesen {len(rows)} kép található. Kérjük, szűkítse a keresést.")
+            
+            if file_paths:
+                zip_buffer = create_zip(file_paths)
+                st.download_button(
+                    label="Képek letöltése ZIP-ben",
+                    data=zip_buffer,
+                    file_name="images.zip",
+                    mime="application/zip"
+                )
         except Error as e:
             st.error(f"Hiba a keresés közben: {e}")
         finally:
@@ -214,16 +236,18 @@ if st.button("Keresés"):
     else:
         st.error("Cannot connect to the database.")
 
-# Számláló készítése
+# Számláló készítése és megjelenítése
 def get_counts(conn):
     counts = {
-        "Felső végtag": {"Váll": {}, "Felkar": {}, "Könyök": {}, "Alkar": {}, "Csukló": {}, "Kéz": {}, "Clavicula": {}, "Scapula": {}, "Ulna": {}, "Radius": {}},
+        "Felső végtag": {"Clavicula": {}, "Scapula": {}, "Váll": {}, "Felkar": {}, "Könyök": {}, "Radius": {}, "Ulna": {}, "Csukló": {}, "Kéz": {}},
         "Alsó végtag": {"Csípő": {}, "Comb": {}, "Térd": {}, "Tibia": {}, "Fibula": {}, "Boka": {}, "Láb": {}},
         "Gerinc": {"Nyaki": {}, "Háti": {}, "Ágyéki": {}, "Kereszt- és farokcsonti": {}},
         "Koponya": {"Arckoponya": {}, "Agykoponya": {}, "Állkapocs": {}}
     }
     views = ["AP", "Lateral"]
     types = ["Normál", "Törött"]
+
+    data = []
 
     for main_region in counts:
         for sub_region in counts[main_region]:
@@ -236,20 +260,20 @@ def get_counts(conn):
                     total = 50  # Maximum 50 kép szükséges minden kombinációból
                     percentage = (count / total) * 100
                     counts[main_region][sub_region][f"{type}_{view}"] = percentage
+                    data.append([main_region, sub_region, view, type, count, percentage])
 
-    return counts
+    return counts, data
 
 conn = create_connection(database)
 if conn:
-    counts = get_counts(conn)
+    counts, data = get_counts(conn)
     for main_region, sub_regions in counts.items():
         st.subheader(main_region)
         for sub_region, view_types in sub_regions.items():
             st.text(sub_region)
-            cols = st.columns(2)  # Csak az AP és Lateral nézeteket jelenítjük meg
-            for i, (view_type, percentage) in enumerate(view_types.items()):
-                color = "normal" if percentage >= 100 else "inverse"
-                cols[i % 2].metric(view_type, f"{percentage:.2f}%", delta_color=color)
+            for view_type, percentage in view_types.items():
+                if percentage > 0:
+                    st.text(f"{view_type}: {percentage:.2f}%")
     conn.close()
 else:
     st.error("Cannot connect to the database.")
