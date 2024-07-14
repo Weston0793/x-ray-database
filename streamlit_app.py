@@ -118,19 +118,23 @@ else:
 
 # Nézet kiválasztása
 view = st.selectbox("Nézet", ["AP", "Lateral", "Egyéb"])
+if view == "Egyéb":
+    view_comment = st.text_input("Specifikálás (Egyéb Nézet)")
+else:
+    view_comment = ""
 
 # Fő régió kiválasztása
 main_region = st.selectbox("Fő régió", ["Felső végtag", "Alsó végtag", "Gerinc", "Koponya"])
 
 # Alrégió kiválasztása
 if main_region == "Felső végtag":
-    sub_region = st.selectbox("Alrégió", ["Váll", "Felkar", "Könyök", "Alkar", "Csukló", "Kéz"])
+    sub_region = st.selectbox("Alrégió", ["Váll", "Felkar", "Könyök", "Alkar", "Csukló", "Kéz", "Clavicula", "Scapula", "Ulna", "Radius"])
 elif main_region == "Alsó végtag":
-    sub_region = st.selectbox("Alrégió", ["Csípő", "Comb", "Térd", "Lábszár", "Boka", "Láb"])
+    sub_region = st.selectbox("Alrégió", ["Csípő", "Comb", "Térd", "Tibia", "Fibula", "Boka", "Láb"])
 elif main_region == "Gerinc":
-    sub_region = st.selectbox("Alrégió", ["Nyaki", "Háti", "Ágyéki"])
+    sub_region = st.selectbox("Alrégió", ["Nyaki", "Háti", "Ágyéki", "Kereszt- és farokcsonti"])
 elif main_region == "Koponya":
-    sub_region = st.selectbox("Alrégió", ["Elülső", "Hátsó", "Oldalsó"])
+    sub_region = st.selectbox("Alrégió", ["Arckoponya", "Agykoponya", "Állkapocs"])
 else:
     sub_region = ""
 
@@ -140,7 +144,8 @@ comment = st.text_area("Megjegyzés", key="comment", value="")
 if st.button("Feltöltés"):
     if uploaded_file and type and view and main_region and sub_region:
         try:
-            save_image(patient_id, uploaded_file, type, view, main_region, sub_region, age, comment + " " + type_comment)
+            full_comment = comment + " " + type_comment + " " + view_comment
+            save_image(patient_id, uploaded_file, type, view, main_region, sub_region, age, full_comment)
             st.success("Kép sikeresen feltöltve!")
         except Exception as e:
             st.error(f"Hiba a kép mentésekor: {e}")
@@ -162,13 +167,13 @@ search_main_region = st.selectbox("Fő régió keresése", ["", "Felső végtag"
 
 # Alrégió kiválasztása kereséshez
 if search_main_region == "Felső végtag":
-    search_sub_region = st.selectbox("Alrégió keresése", ["", "Váll", "Felkar", "Könyök", "Alkar", "Csukló", "Kéz"])
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Váll", "Felkar", "Könyök", "Alkar", "Csukló", "Kéz", "Clavicula", "Scapula", "Ulna", "Radius"])
 elif search_main_region == "Alsó végtag":
-    search_sub_region = st.selectbox("Alrégió keresése", ["", "Csípő", "Comb", "Térd", "Lábszár", "Boka", "Láb"])
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Csípő", "Comb", "Térd", "Tibia", "Fibula", "Boka", "Láb"])
 elif search_main_region == "Gerinc":
-    search_sub_region = st.selectbox("Alrégió keresése", ["", "Nyaki", "Háti", "Ágyéki"])
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Nyaki", "Háti", "Ágyéki", "Kereszt- és farokcsonti"])
 elif search_main_region == "Koponya":
-    search_sub_region = st.selectbox("Alrégió keresése", ["", "Elülső", "Hátsó", "Oldalsó"])
+    search_sub_region = st.selectbox("Alrégió keresése", ["", "Arckoponya", "Agykoponya", "Állkapocs"])
 else:
     search_sub_region = ""
 
@@ -212,10 +217,10 @@ if st.button("Keresés"):
 # Számláló készítése
 def get_counts(conn):
     counts = {
-        "Felső végtag": {"Váll": {}, "Felkar": {}, "Könyök": {}, "Alkar": {}, "Csukló": {}, "Kéz": {}},
-        "Alsó végtag": {"Csípő": {}, "Comb": {}, "Térd": {}, "Lábszár": {}, "Boka": {}, "Láb": {}},
-        "Gerinc": {"Nyaki": {}, "Háti": {}, "Ágyéki": {}},
-        "Koponya": {"Elülső": {}, "Hátsó": {}, "Oldalsó": {}}
+        "Felső végtag": {"Váll": {}, "Felkar": {}, "Könyök": {}, "Alkar": {}, "Csukló": {}, "Kéz": {}, "Clavicula": {}, "Scapula": {}, "Ulna": {}, "Radius": {}},
+        "Alsó végtag": {"Csípő": {}, "Comb": {}, "Térd": {}, "Tibia": {}, "Fibula": {}, "Boka": {}, "Láb": {}},
+        "Gerinc": {"Nyaki": {}, "Háti": {}, "Ágyéki": {}, "Kereszt- és farokcsonti": {}},
+        "Koponya": {"Arckoponya": {}, "Agykoponya": {}, "Állkapocs": {}}
     }
     views = ["AP", "Lateral"]
     types = ["Normál", "Törött"]
