@@ -277,3 +277,17 @@ if conn:
     conn.close()
 else:
     st.error("Cannot connect to the database.")
+
+# Additional Information
+st.markdown("""
+    ### Authors:
+    Aba Lőrincz<sup class='superscript'>1,2,3,*</sup>, Hermann Nudelman<sup class='superscript'>1,3</sup>, András Kedves<sup class='superscript'>2</sup>, and Gergő Józsa<sup class='superscript'>1,3</sup>
+    
+    ### Affiliations:
+    1. Department of Thermophysiology, Institute for Translational Medicine, Medical School, University of Pécs, 12 Szigeti Street, H7624 Pécs, Hungary; aba.lorincz@gmail.com (AL); 
+    2. Department of Automation, Faculty of Engineering and Information Technology, University of Pécs, 2 Boszorkány Street, H7624 Pécs, Hungary; 
+    3. Division of Surgery, Traumatology, Urology, and Otorhinolaryngology, Department of Paediatrics, Clinical Complex, University of Pécs, 7 József Attila Street, H7623 Pécs, Hungary; 
+
+    ### Code:
+    [GitHub Repository](https://github.com/Weston0793/x-ray-database/)
+""", unsafe_allow_html=True)
