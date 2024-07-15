@@ -71,5 +71,3 @@ This is a Streamlit-based application for uploading, labeling, and managing X-ra
 - The application uses SQLite for storing image metadata.
 - Images are saved in the `images` directory.
 
-## File Structure
-
