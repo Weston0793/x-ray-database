@@ -114,7 +114,7 @@ def create_zip(files):
     return zip_buffer
 
 # Streamlit alkalmazás
-st.title("Kép feltöltése és címkézése")
+st.title("Röntgenkép Adatbázis")
 
 # Beteg azonosító létrehozása vagy kiválasztása
 patient_id = st.text_input("Beteg azonosító (hagyja üresen új beteg esetén)", generate_patient_id())
