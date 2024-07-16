@@ -1,2 +1,5 @@
 streamlit
 pandas
+pydrive2
+Pillow
+firebase-admin
