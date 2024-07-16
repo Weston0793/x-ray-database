@@ -1,13 +1,3 @@
-# X-ray Image Management Application
-
-This is a Streamlit-based application for uploading, labeling, and managing X-ray images. Users can upload images, assign specific labels, and search for images based on various criteria. Additionally, users can download the search results as a ZIP file.
-
-## Features
-
-- Upload X-ray images with specific labels.
-- Search images based on type, view, main region, and sub-region.
-- Download search results as a ZIP file.
-- Track the percentage of image counts by categories.
 # Orvosi Röntgenkép Adatbázis
 
 Üdvözöljük az Orvosi Röntgenkép Adatbázis alkalmazásban. Ez az alkalmazás lehetővé teszi orvosi röntgenképek feltöltését, keresését és állapotának nyomon követését. Az alkalmazás célja a röntgenképek gyűjtésének, elemzésének és kezelésének elősegítése, ezáltal támogatva az egészségügyi szakembereket és kutatókat a diagnosztikai és kutatási munkájukban.
