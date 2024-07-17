@@ -70,7 +70,38 @@ def main():
     with col6:
         items_per_page = st.selectbox("Találatok száma oldalanként", options=[10, 25, 50, 100], index=0)
 
-    if st.button("Keresés"):
+    # Button for search
+    search_button_clicked = st.button("Keresés")
+
+    if search_button_clicked:
+        page = 1  # Reset to the first page on new search
+        st.experimental_set_query_params(
+            search_button_clicked=True,
+            type=search_type,
+            view=search_view,
+            main_region=search_main_region,
+            sub_region=search_sub_region,
+            conditions=search_conditions,
+            age_filter_active=age_filter_active,
+            age=search_age,
+            page=page,
+            items_per_page=items_per_page
+        )
+        st.experimental_rerun()
+
+    # Get query params to manage pagination and search state
+    query_params = st.experimental_get_query_params()
+    if 'search_button_clicked' in query_params:
+        search_type = query_params.get("type", [""])[0]
+        search_view = query_params.get("view", [""])[0]
+        search_main_region = query_params.get("main_region", [""])[0]
+        search_sub_region = query_params.get("sub_region", [""])[0]
+        search_conditions = query_params.get("conditions", [])
+        age_filter_active = query_params.get("age_filter_active", [""])[0] == "True"
+        search_age = eval(query_params.get("age", ["(0, 18)"])[0])
+        page = int(query_params.get("page", [1])[0])
+        items_per_page = int(query_params.get("items_per_page", [10])[0])
+
         results = db.collection('images')
         query_filters = []
 
@@ -113,15 +144,39 @@ def main():
 
             st.write(f"Összesen {total_docs} találat. {total_pages} oldal.")
 
-            if page > 1:
-                if st.button("Előző oldal", key="prev_page"):
-                    st.session_state.page = page - 1
-                    st.experimental_rerun()
-
-            if page < total_pages:
-                if st.button("Következő oldal", key="next_page"):
-                    st.session_state.page = page + 1
-                    st.experimental_rerun()
+            col7, col8 = st.columns(2)
+            with col7:
+                if page > 1:
+                    if st.button("Előző oldal", key="prev_page"):
+                        st.experimental_set_query_params(
+                            search_button_clicked=True,
+                            type=search_type,
+                            view=search_view,
+                            main_region=search_main_region,
+                            sub_region=search_sub_region,
+                            conditions=search_conditions,
+                            age_filter_active=age_filter_active,
+                            age=search_age,
+                            page=page-1,
+                            items_per_page=items_per_page
+                        )
+                        st.experimental_rerun()
+            with col8:
+                if page < total_pages:
+                    if st.button("Következő oldal", key="next_page"):
+                        st.experimental_set_query_params(
+                            search_button_clicked=True,
+                            type=search_type,
+                            view=search_view,
+                            main_region=search_main_region,
+                            sub_region=search_sub_region,
+                            conditions=search_conditions,
+                            age_filter_active=age_filter_active,
+                            age=search_age,
+                            page=page+1,
+                            items_per_page=items_per_page
+                        )
+                        st.experimental_rerun()
 
             if file_paths:
                 zip_buffer = create_zip([data['url'] for data in (doc.to_dict() for doc in all_docs)])
