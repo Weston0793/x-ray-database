@@ -105,23 +105,23 @@ def get_counts():
                 for type in types:
                     docs = db.collection('images').where('main_region', '==', main_region).where('sub_region', '==', sub_region).where('view', '==', view).where('type', '==', type).stream()
                     count = len(list(docs))
-                    total = 50  # Maximum 50 kép szükséges minden kombinációból
-                    percentage = (count / total) * 100
-                    counts[main_region][sub_region][f"{type}_{view}"] = percentage
-                    data.append([main_region, sub_region, view, type, count, percentage])
+                    counts[main_region][sub_region][f"{type}_{view}"] = count
+                    data.append([main_region, sub_region, view, type, count])
 
     return counts, data
 
 def get_progress_summary(counts):
     summary = {}
     for main_region, sub_regions in counts.items():
-        summary[main_region] = {"total": 0, "progress": 0}
+        summary[main_region] = {"total": 0, "progress": 0, "subregions": {}}
         for sub_region, view_types in sub_regions.items():
             sub_region_total = 0
             sub_region_progress = 0
-            for view_type, percentage in view_types.items():
-                sub_region_total += 1
-                sub_region_progress += percentage
-            summary[main_region]["total"] += sub_region_total * 100
+            for view_type, count in view_types.items():
+                sub_region_total += 50
+                sub_region_progress += count
+            summary[main_region]["total"] += sub_region_total
             summary[main_region]["progress"] += sub_region_progress
+            summary[main_region]["subregions"][sub_region] = {"total": sub_region_total, "count": sub_region_progress}
     return summary
+
