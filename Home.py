@@ -1,5 +1,6 @@
 import streamlit as st
 from firebase_helpers import save_image
+from home_backend import handle_file_upload, confirm_and_upload_data
 import uuid
 
 def main():
@@ -67,31 +68,27 @@ def main():
     uploaded_file = st.file_uploader("Fájl kiválasztása", type=["jpg", "jpeg", "png"], accept_multiple_files=False)
 
     if uploaded_file is not None:
-        if uploaded_file.size > 15 * 1024 * 1024:
-            st.error("A kép mérete nem lehet nagyobb, mint 15 MB.")
-            uploaded_file = None
-        else:
-            st.image(uploaded_file, caption="Feltöltött kép", use_column_width=True)
+        uploaded_file = handle_file_upload(uploaded_file)
 
     if uploaded_file:
         col1, col2 = st.columns(2)
         with col1:
             type = st.radio("Válassza ki a típusát", ["Normál", "Törött", "Egyéb"], key="type")
-            type_comment = ""
-            if type == "Egyéb":
-                type_comment = st.selectbox("Specifikálás (Egyéb)", ["Luxatio", "Subluxatio", "Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Malignus Tumor", "Benignus Tumor", "Metastasis", "Rheumatoid Arthritis", "Cysta", "Genetikai/Veleszületett", "Egyéb"])
-                if type_comment in ["Malignus Tumor", "Benignus Tumor", "Genetikai/Veleszületett", "Egyéb"]:
-                    type_comment = st.text_input("Specifikálás (Egyéb)")
-
+            if type == "Egyéb": 
+                type = st.selectbox("Specifikálás (Egyéb)", ["Luxatio", "Subluxatio", "Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Malignus Tumor", "Benignus Tumor", "Metastasis", "Rheumatoid Arthritis", "Cysta", "Genetikai/Veleszületett", "Egyéb"])
+                if type in ["Malignus Tumor", "Benignus Tumor", "Genetikai/Veleszületett", "Egyéb"]:
+                    type = st.text_input("Adja meg a specifikus típust (Egyéb)")
+        
         with col2:
             view = st.radio("Válassza ki a nézetet", ["AP", "Lateral", "Egyéb"], key="view")
-            view_comment = ""
             if view == "Egyéb":
-                view_comment = st.selectbox("Specifikálás (Egyéb Nézet)", ["Ferde", "PA", "Speciális"])
-                view_comment = st.text_input("Specifikálás (Egyéb Nézet)")
+                view = st.selectbox("Specifikálás (Egyéb Nézet)", ["Ferde", "PA", "Speciális"])
+                if view == "Speciális":
+                    view = st.text_input("Adja meg a specifikus nézetet (Speciális)")
 
         if type != "Normál":
-            associated_conditions = st.multiselect("Társuló Komplikációk (többet is választhat)", ["Nyílt", "Darabos", "Avulsio", "Luxatio", "Subluxatio", "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés", "Cysta", "Tumor", "Genetikai"])
+            complications = st.multiselect("Komplikációk (többet is választhat)", ["Nyílt", "Darabos", "Avulsio", "Luxatio", "Subluxatio", "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés"])
+            associated_conditions = st.multiselect("Társuló Kórállapotok (többet is választhat)", ["Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Rheumatoid Arthritis", "Cysta", "Metastasis", "Malignus Tumor", "Benignus Tumor", "Genetikai"])
 
         col3, col4 = st.columns(2)
         with col3:
@@ -110,6 +107,11 @@ def main():
                 sub_region = ""
 
         age = st.select_slider("Életkor (opcionális)", options=["NA"] + list(range(0, 121)), value="NA")
+        age_group = ""
+        if age != "NA":
+            age = int(age)
+            age_group = "Gyermek" if age <= 18 else "Felnőtt"
+
         comment = st.text_area("Megjegyzés (opcionális)", key="comment", value="")
 
         if "confirm_data" not in st.session_state:
@@ -124,38 +126,17 @@ def main():
                     "main_region": main_region,
                     "sub_region": sub_region,
                     "age": age,
-                    "comment": comment + " " + type_comment + " " + view_comment,
+                    "age_group": age_group,
+                    "comment": comment,
                     "file": uploaded_file,
+                    "complications": complications if type != "Normál" else [],
                     "associated_conditions": associated_conditions if type != "Normál" else []
                 }
                 st.session_state["confirm_data"] = upload_data
                 st.rerun()
 
         if st.session_state["confirm_data"]:
-            upload_data = st.session_state["confirm_data"]
-            st.markdown('<div class="confirmation-box">', unsafe_allow_html=True)
-            st.markdown('<div class="confirmation-title">Kérlek, a feltöltéshez erősítsd meg a következő adatokat:</div>', unsafe_allow_html=True)
-            st.markdown(f'**Beteg azonosító:** {upload_data["patient_id"]}')
-            st.markdown(f'**Típus:** {upload_data["type"]}')
-            st.markdown(f'**Nézet:** {upload_data["view"]}')
-            st.markdown(f'**Fő régió:** {upload_data["main_region"]}')
-            st.markdown(f'**Alrégió:** {upload_data["sub_region"]}')
-            st.markdown(f'**Életkor: (opcionális)** {upload_data["age"]}')
-            st.markdown(f'**Megjegyzés: (opcionális)** {upload_data["comment"]}')
-            if upload_data["associated_conditions"]:
-                st.markdown(f'**Társuló Komplikációk: (többet is választhat)** {", ".join(upload_data["associated_conditions"])}')
-
-            st.markdown('<div class="center-button">', unsafe_allow_html=True)
-            if st.button("Megerősít és Feltölt", key="confirm_upload"):
-                try:
-                    save_image(**upload_data)
-                    st.success("Kép sikeresen feltöltve!")
-                    st.session_state["confirm_data"] = None
-                    st.experimental_set_query_params(scroll_to="confirmation")
-                except Exception as e:
-                    st.error(f"Hiba a kép mentésekor: {e}")
-                    st.session_state["confirm_data"] = None
-            st.markdown('</div>', unsafe_allow_html=True)
+            confirm_and_upload_data(st.session_state["confirm_data"])
 
     if st.experimental_get_query_params().get("scroll_to") == ["confirmation"]:
         st.markdown('<script>window.scrollTo(0, document.body.scrollHeight);</script>', unsafe_allow_html=True)
