@@ -42,6 +42,16 @@ def main():
             font-weight: bold;
             margin-bottom: 10px;
         }
+        .file-upload-instruction {
+            font-size: 18px;
+            font-weight: bold;
+            color: black;
+            margin-bottom: 20px;
+            text-align: center;
+            border: 2px solid black;
+            padding: 10px;
+            background-color: #f9f9f9;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -53,7 +63,8 @@ def main():
 
     st.text_input("Beteg azonosító", patient_id, disabled=True)
 
-    uploaded_file = st.file_uploader("Kérem húzzon az alábbi ablakra vagy válasszon ki a fájlkezelőn keresztűl egy röntgenképet", type=["jpg", "jpeg", "png"], accept_multiple_files=False)
+    st.markdown('<div class="file-upload-instruction">Kérem húzzon az alábbi ablakra vagy válasszon ki a fájlkezelőn keresztül egy röntgenképet (Max 15 MB)</div>', unsafe_allow_html=True)
+    uploaded_file = st.file_uploader("Fájl kiválasztása", type=["jpg", "jpeg", "png"], accept_multiple_files=False)
 
     if uploaded_file is not None:
         if uploaded_file.size > 15 * 1024 * 1024:
@@ -63,40 +74,45 @@ def main():
             st.image(uploaded_file, caption="Feltöltött kép", use_column_width=True)
 
     if uploaded_file:
-        st.write("Típus")
-        type = st.radio("Válassza ki a típusát", ["Normál", "Törött", "Egyéb"], key="type")
-        type_comment = ""
-        if type == "Egyéb":
-            type_comment = st.selectbox("Specifikálás (Egyéb)", ["Luxatio", "Subluxatio", "Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Malignus Tumor", "Benignus Tumor", "Metastasis", "Rheumatoid Arthritis", "Cysta", "Genetikai/Veleszületett", "Egyéb"])
-            if type_comment in ["Malignus Tumor", "Benignus Tumor", "Genetikai/Veleszületett", "Egyéb"]:
-                type_comment = st.text_input("Specifikálás (Egyéb)")
+        col1, col2 = st.columns(2)
+        with col1:
+            st.write("Típus")
+            type = st.radio("Válassza ki a típusát", ["Normál", "Törött", "Egyéb"], key="type")
+            type_comment = ""
+            if type == "Egyéb":
+                type_comment = st.selectbox("Specifikálás (Egyéb)", ["Luxatio", "Subluxatio", "Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Malignus Tumor", "Benignus Tumor", "Metastasis", "Rheumatoid Arthritis", "Cysta", "Genetikai/Veleszületett", "Egyéb"])
+                if type_comment in ["Malignus Tumor", "Benignus Tumor", "Genetikai/Veleszületett", "Egyéb"]:
+                    type_comment = st.text_input("Specifikálás (Egyéb)")
+
+        with col2:
+            st.write("Nézet")
+            view = st.radio("Válassza ki a nézetet", ["AP", "Lateral", "Egyéb"], key="view")
+            view_comment = ""
+            if view == "Egyéb":
+                view_comment = st.selectbox("Specifikálás (Egyéb Nézet)", ["Ferde", "PA", "Speciális"])
+                view_comment = st.text_input("Specifikálás (Egyéb Nézet)")
 
         if type != "Normál":
-            st.write("Társuló Komplikációk")
-            associated_conditions = st.multiselect("Társuló Komplikációk", ["Nyílt", "Darabos", "Avulsio", "Luxatio", "Subluxatio", "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés", "Cysta", "Tumor", "Genetikai"])
+            associated_conditions = st.multiselect("Társuló Komplikációk (többet is választhat)", ["Nyílt", "Darabos", "Avulsio", "Luxatio", "Subluxatio", "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés", "Cysta", "Tumor", "Genetikai"])
 
-        st.write("Nézet")
-        view = st.radio("Válassza ki a nézetet", ["AP", "Lateral", "Egyéb"], key="view")
-        view_comment = ""
-        if view == "Egyéb":
-            view_comment = st.selectbox("Specifikálás (Egyéb Nézet)", ["Ferde", "PA", "Speciális"])
-            view_comment = st.text_input("Specifikálás (Egyéb Nézet)")
+        col3, col4 = st.columns(2)
+        with col3:
+            main_region = st.selectbox("Fő régió", ["Felső végtag", "Alsó végtag", "Gerinc", "Koponya"])
 
-        main_region = st.selectbox("Fő régió", ["Felső végtag", "Alsó végtag", "Gerinc", "Koponya"])
+        with col4:
+            if main_region == "Felső végtag":
+                sub_region = st.selectbox("Alrégió", ["Clavicula", "Scapula", "Váll", "Humerus", "Könyök", "Radius", "Ulna", "Csukló", "Kéz"])
+            elif main_region == "Alsó végtag":
+                sub_region = st.selectbox("Alrégió", ["Csípő", "Comb", "Térd", "Tibia", "Fibula", "Boka", "Láb"])
+            elif main_region == "Gerinc":
+                sub_region = st.selectbox("Alrégió", ["Nyaki", "Háti", "Ágyéki", "Kereszt- és farokcsonti"])
+            elif main_region == "Koponya":
+                sub_region = st.selectbox("Alrégió", ["Arckoponya", "Agykoponya", "Állkapocs"])
+            else:
+                sub_region = ""
 
-        if main_region == "Felső végtag":
-            sub_region = st.selectbox("Alrégió", ["Clavicula", "Scapula", "Váll", "Humerus", "Könyök", "Radius", "Ulna", "Csukló", "Kéz"])
-        elif main_region == "Alsó végtag":
-            sub_region = st.selectbox("Alrégió", ["Csípő", "Comb", "Térd", "Tibia", "Fibula", "Boka", "Láb"])
-        elif main_region == "Gerinc":
-            sub_region = st.selectbox("Alrégió", ["Nyaki", "Háti", "Ágyéki", "Kereszt- és farokcsonti"])
-        elif main_region == "Koponya":
-            sub_region = st.selectbox("Alrégió", ["Arckoponya", "Agykoponya", "Állkapocs"])
-        else:
-            sub_region = ""
-
-        age = st.select_slider("Életkor", options=["NA"] + list(range(0, 121)), value="NA")
-        comment = st.text_area("Megjegyzés", key="comment", value="")
+        age = st.select_slider("Életkor (opcionális)", options=["NA"] + list(range(0, 121)), value="NA")
+        comment = st.text_area("Megjegyzés (opcionális)", key="comment", value="")
 
         if "confirm_data" not in st.session_state:
             st.session_state["confirm_data"] = None
@@ -126,10 +142,10 @@ def main():
             st.markdown(f'**Nézet:** {upload_data["view"]}')
             st.markdown(f'**Fő régió:** {upload_data["main_region"]}')
             st.markdown(f'**Alrégió:** {upload_data["sub_region"]}')
-            st.markdown(f'**Életkor:(Opcionális)** {upload_data["age"]}')
-            st.markdown(f'**Megjegyzés: (Opcionális)** {upload_data["comment"]}')
+            st.markdown(f'**Életkor: (opcionális)** {upload_data["age"]}')
+            st.markdown(f'**Megjegyzés: (opcionális)** {upload_data["comment"]}')
             if upload_data["associated_conditions"]:
-                st.markdown(f'**Társuló Komplikációk:(Többet is választhat!)** {", ".join(upload_data["associated_conditions"])}')
+                st.markdown(f'**Társuló Komplikációk: (többet is választhat)** {", ".join(upload_data["associated_conditions"])}')
 
             st.markdown('<div class="center-button">', unsafe_allow_html=True)
             if st.button("Megerősít és Feltölt", key="confirm_upload"):
@@ -137,10 +153,14 @@ def main():
                     save_image(**upload_data)
                     st.success("Kép sikeresen feltöltve!")
                     st.session_state["confirm_data"] = None
+                    st.experimental_set_query_params(scroll_to="confirmation")
                 except Exception as e:
                     st.error(f"Hiba a kép mentésekor: {e}")
                     st.session_state["confirm_data"] = None
             st.markdown('</div>', unsafe_allow_html=True)
+
+    if st.experimental_get_query_params().get("scroll_to") == ["confirmation"]:
+        st.markdown('<script>window.scrollTo(0, document.body.scrollHeight);</script>', unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()
