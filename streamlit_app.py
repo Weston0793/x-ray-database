@@ -1,7 +1,7 @@
 import streamlit as st
 from multipage import MultiPage
 from Home import main as home
-from Search import main as search
+from Search import search_section as search
 from Status import main as status
 from Contact import main as contact
 
