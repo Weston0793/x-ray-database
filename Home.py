@@ -53,7 +53,7 @@ def main():
 
     st.text_input("Beteg azonosító", patient_id, disabled=True)
 
-    uploaded_file = st.file_uploader("Válassz egy képet", type=["jpg", "jpeg", "png"], accept_multiple_files=False)
+    uploaded_file = st.file_uploader("Kérem húzzon az alábbi ablakra vagy válasszon ki a fájlkezelőn keresztűl egy röntgenképet", type=["jpg", "jpeg", "png"], accept_multiple_files=False)
 
     if uploaded_file is not None:
         if uploaded_file.size > 15 * 1024 * 1024:
@@ -120,16 +120,16 @@ def main():
         if st.session_state["confirm_data"]:
             upload_data = st.session_state["confirm_data"]
             st.markdown('<div class="confirmation-box">', unsafe_allow_html=True)
-            st.markdown('<div class="confirmation-title">Kérlek, erősítsd meg a következő adatokat:</div>', unsafe_allow_html=True)
+            st.markdown('<div class="confirmation-title">Kérlek, a feltöltéshez erősítsd meg a következő adatokat:</div>', unsafe_allow_html=True)
             st.markdown(f'**Beteg azonosító:** {upload_data["patient_id"]}')
             st.markdown(f'**Típus:** {upload_data["type"]}')
             st.markdown(f'**Nézet:** {upload_data["view"]}')
             st.markdown(f'**Fő régió:** {upload_data["main_region"]}')
             st.markdown(f'**Alrégió:** {upload_data["sub_region"]}')
-            st.markdown(f'**Életkor:** {upload_data["age"]}')
-            st.markdown(f'**Megjegyzés:** {upload_data["comment"]}')
+            st.markdown(f'**Életkor:(Opcionális)** {upload_data["age"]}')
+            st.markdown(f'**Megjegyzés: (Opcionális)** {upload_data["comment"]}')
             if upload_data["associated_conditions"]:
-                st.markdown(f'**Társuló Komplikációk:** {", ".join(upload_data["associated_conditions"])}')
+                st.markdown(f'**Társuló Komplikációk:(Többet is választhat!)** {", ".join(upload_data["associated_conditions"])}')
 
             st.markdown('<div class="center-button">', unsafe_allow_html=True)
             if st.button("Megerősít és Feltölt", key="confirm_upload"):
