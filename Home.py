@@ -76,7 +76,6 @@ def main():
     if uploaded_file:
         col1, col2 = st.columns(2)
         with col1:
-            st.write("Típus")
             type = st.radio("Válassza ki a típusát", ["Normál", "Törött", "Egyéb"], key="type")
             type_comment = ""
             if type == "Egyéb":
@@ -85,7 +84,6 @@ def main():
                     type_comment = st.text_input("Specifikálás (Egyéb)")
 
         with col2:
-            st.write("Nézet")
             view = st.radio("Válassza ki a nézetet", ["AP", "Lateral", "Egyéb"], key="view")
             view_comment = ""
             if view == "Egyéb":
