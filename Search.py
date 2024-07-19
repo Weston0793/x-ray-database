@@ -1,83 +1,124 @@
+
 import streamlit as st
 from google.cloud import firestore
 from firebase_helpers import db, create_zip
 import uuid
 from google.api_core.exceptions import GoogleAPICallError
 from search_backend import perform_search
-from helper_functions import style_markdown, select_subregion, select_sub_subregion, select_sub_sub_subregion
 
 def search_section():
-    style_markdown()
+    st.markdown(
+        """
+        <style>
+        .search-title {
+            font-size: 24px;
+            font-weight: bold;
+            text-align: center;
+            border: 2px solid black;
+            padding: 10px;
+            margin-bottom: 20px;
+        }
+        .result-image {
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            padding: 5px;
+            margin-bottom: 10px;
+        }
+        .button-container {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            margin: 10px 0;
+        }
+        .button-container button {
+            font-size: 18px;
+            padding: 10px 20px;
+            margin: 0 5px;
+            border-radius: 5px;
+            background-color: #4CAF50; /* Green */
+            color: white;
+            border: none;
+            cursor: pointer;
+        }
+        .button-container button:hover {
+            background-color: #45a049;
+        }
+        </style>
+        """,
+        unsafe_allow_html=True,
+    )
+
     st.markdown('<div class="search-title">Képek keresése</div>', unsafe_allow_html=True)
 
-    types = ["", "Normál", "Törött", "Egyéb"]
-    views = ["", "AP", "Lateral", "Ferde", "PA", "Speciális"]
-    regions = ["", "Felső végtag", "Alsó végtag", "Gerinc", "Koponya", "Mellkas", "Has"]
-
-    # Initialize session state if not exists
-    if 'q_params' not in st.session_state:
-        st.session_state.q_params = {
-            "type": "",
-            "view": "",
-            "main_reg": "",
-            "sub_reg": "",
-            "sub_sub_reg": "",
-            "sub_sub_sub_reg": "",
-            "comp": [],
-            "cond": [],
-            "age_flt": False,
-            "age_rng": (0, 18),
-            "age_grp": "",
-            "page": 1,
-            "items_pp": 10
-        }
+    predefined_types = ["", "Törött", "Normál", "Luxatio", "Subluxatio", "Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Malignus Tumor", "Benignus Tumor", "Metastasis", "Rheumatoid Arthritis", "Cysta", "Genetikai/Veleszületett", "Egyéb"]
+    predefined_views = ["", "AP", "Lateral", "Ferde", "PA", "Speciális"]
 
     # Type and view in one row
     col1, col2 = st.columns(2)
     with col1:
-        st.session_state.q_params["type"] = st.selectbox("Típus", types, index=types.index(st.session_state.q_params["type"]))
+        search_type = st.selectbox("Típus keresése", predefined_types)
     with col2:
-        st.session_state.q_params["view"] = st.selectbox("Nézet", views, index=views.index(st.session_state.q_params["view"]))
+        search_view = st.selectbox("Nézet keresése", predefined_views)
 
     # Main and sub region in one row
     col3, col4 = st.columns(2)
     with col3:
-        st.session_state.q_params["main_reg"] = st.selectbox("Fő régió", regions, index=regions.index(st.session_state.q_params["main_reg"]))
+        search_main_region = st.selectbox("Fő régió keresése", ["", "Felső végtag", "Alsó végtag", "Gerinc", "Koponya"])
     with col4:
-        st.session_state.q_params["sub_reg"] = select_subregion(st.session_state.q_params["main_reg"])
+        if search_main_region == "Felső végtag":
+            search_sub_region = st.selectbox("Alrégió keresése", ["", "Clavicula", "Scapula", "Váll", "Humerus", "Könyök", "Radius", "Ulna", "Csukló", "Kéz"])
+        elif search_main_region == "Alsó végtag":
+            search_sub_region = st.selectbox("Alrégió keresése", ["", "Csípő", "Comb", "Térd", "Tibia", "Fibula", "Boka", "Láb"])
+        elif search_main_region == "Gerinc":
+            search_sub_region = st.selectbox("Alrégió keresése", ["", "Nyaki", "Háti", "Ágyéki", "Kereszt- és farokcsonti"])
+        elif search_main_region == "Koponya":
+            search_sub_region = st.selectbox("Alrégió keresése", ["", "Arckoponya", "Agykoponya", "Állkapocs"])
+        else:
+            search_sub_region = ""
 
-    # Sub-subregion and sub-sub-subregion in one row
-    col5, col6 = st.columns(2)
-    with col5:
-        st.session_state.q_params["sub_sub_reg"] = select_sub_subregion(st.session_state.q_params["sub_reg"])
-    with col6:
-        st.session_state.q_params["sub_sub_sub_reg"] = select_sub_sub_subregion(st.session_state.q_params["sub_sub_reg"])
-
-    # Multiselects for complications and associated conditions
-    st.session_state.q_params["comp"] = st.multiselect("Komplikációk", ["Nyílt", "Darabos", "Avulsio", "Luxatio", "Subluxatio", "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés"], default=st.session_state.q_params["comp"])
-    st.session_state.q_params["cond"] = st.multiselect("Kórállapotok", ["Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Rheumatoid Arthritis", "Cysta", "Metastasis", "Malignus Tumor", "Benignus Tumor", "Genetikai"], default=st.session_state.q_params["cond"])
+    search_complications = st.multiselect("Komplikációk keresése", ["Nyílt", "Darabos", "Avulsio", "Luxatio", "Subluxatio", "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés"])
+    search_associated_conditions = st.multiselect("Társuló Kórállapotok keresése", ["Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Rheumatoid Arthritis", "Cysta", "Metastasis", "Malignus Tumor", "Benignus Tumor", "Genetikai"])
 
     # Age filter with checkbox
-    st.session_state.q_params["age_flt"] = st.checkbox("Életkor (intervallum)", value=st.session_state.q_params["age_flt"])
-    if st.session_state.q_params["age_flt"]:
-        st.session_state.q_params["age_rng"] = st.slider("Életkor (intervallum)", min_value=0, max_value=120, value=st.session_state.q_params["age_rng"], step=1, format="%d")
+    age_filter_active = st.checkbox("Életkor keresése (intervallum)")
+    if age_filter_active:
+        search_age = st.slider("Életkor keresése (intervallum)", min_value=0, max_value=120, value=(0, 18), step=1, format="%d")
+    else:
+        search_age = None
 
-    st.session_state.q_params["age_grp"] = st.selectbox("Életkori csoport", ["", "Gyermek", "Felnőtt"], index=["", "Gyermek", "Felnőtt"].index(st.session_state.q_params["age_grp"]))
+    search_age_group = st.selectbox("Életkori csoport keresése", ["", "Gyermek", "Felnőtt"])
 
     # Page and items per page in one row
-    col7, col8 = st.columns(2)
-    with col7:
-        st.session_state.q_params["page"] = st.number_input("Oldal", min_value=1, step=1, value=st.session_state.q_params["page"])
-    with col8:
-        st.session_state.q_params["items_pp"] = st.selectbox("Találatok/Oldal", options=[10, 25, 50, 100], index=[10, 25, 50, 100].index(st.session_state.q_params["items_pp"]))
+    col5, col6 = st.columns(2)
+    with col5:
+        page = st.number_input("Oldal", min_value=1, step=1, value=1)
+    with col6:
+        items_per_page = st.selectbox("Találatok száma oldalanként", options=[10, 25, 50, 100], index=0)
 
     # Button for search
-    if st.button("Keresés", key="search_btn"):
-        st.session_state.q_params["page"] = 1  # Reset to the first page on new search
+    search_button_clicked = st.button("Keresés", key="search_button")
+
+    if search_button_clicked:
+        page = 1  # Reset to the first page on new search
+        st.session_state.search_button_clicked = True
+        st.session_state.query_params = {
+            "search_button_clicked": True,
+            "type": search_type,
+            "view": search_view,
+            "main_region": search_main_region,
+            "sub_region": search_sub_region,
+            "complications": search_complications,
+            "associated_conditions": search_associated_conditions,
+            "age_filter_active": age_filter_active,
+            "age": str(search_age) if search_age else "",
+            "age_group": search_age_group,
+            "page": page,
+            "items_per_page": items_per_page
+        }
         st.experimental_rerun()
 
-    if 'q_params' in st.session_state:
-        perform_search(st.session_state.q_params)
+    if 'search_button_clicked' in st.session_state:
+        perform_search(st.session_state.query_params)
 
 if __name__ == "__main__":
     search_section()
