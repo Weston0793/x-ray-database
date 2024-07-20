@@ -6,6 +6,7 @@ import firebase_admin
 from firebase_admin import credentials, firestore, storage
 import streamlit as st
 import requests
+import datetime
 
 # Initialize Firebase
 def initialize_firebase():
@@ -90,6 +91,20 @@ def download_file(url):
     response = requests.get(url)
     return response.content
     
+def save_comment(name, comment):
+    doc_ref = db.collection('comments').document()
+    doc_ref.set({
+        'name': name,
+        'comment': comment,
+        'timestamp': firestore.SERVER_TIMESTAMP
+    })
+
+def get_comments(start, limit):
+    comments_ref = db.collection('comments').order_by('timestamp', direction=firestore.Query.DESCENDING).offset(start).limit(limit)
+    docs = comments_ref.stream()
+    comments = [{'name': doc.to_dict().get('name'), 'comment': doc.to_dict().get('comment')} for doc in docs]
+    return comments
+
 def get_counts():
     counts = {
         "Felső végtag": {"Váll": {},  "Humerus": {}, "Könyök": {},"Alkar": {}, "Csukló": {}, "Kéz": {}},
@@ -113,8 +128,6 @@ def get_counts():
                     data.append([main_region, sub_region, view, type, count])
     return counts, data
     
-
-        
 def get_progress_summary(counts):
     summary = {}
     for main_region, sub_regions in counts.items():
