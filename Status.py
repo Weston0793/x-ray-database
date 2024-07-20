@@ -102,7 +102,7 @@ def main():
     st.markdown('<div class="tracker-title">Státusz követése</div>', unsafe_allow_html=True)
     st.markdown('<div class="update-note">Kérjük, várjon kb. 10 másodpercet a frissítéshez</div>', unsafe_allow_html=True)
 
-    # Ellenőrizzük, hogy létezik-e a helyi adatbázis
+    # Check if the local database exists
     if not os.path.exists(DB_PATH):
         create_db()
         data_exists = False
@@ -119,11 +119,11 @@ def main():
 
     # Calculate grand total progress correctly using count values
     total_done = 0
+    total_tasks = 0
     for region in summary:
         for sub_region in summary[region]["subregions"]:
             total_done += summary[region]["subregions"][sub_region]["count"]
-
-    total_tasks = 4600  # Set the total number of tasks to 4600 as required
+            total_tasks += 200  # Each subregion has 200 tasks
 
     if total_tasks > 0:
         grand_total_progress = (total_done / total_tasks) * 100
