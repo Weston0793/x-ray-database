@@ -21,6 +21,8 @@ def confirm_and_upload_data(upload_data):
     st.markdown(f'**Nézet:** {upload_data["view"]}')
     st.markdown(f'**Fő régió:** {upload_data["main_region"]}')
     st.markdown(f'**Alrégió:** {upload_data["sub_region"]}')
+    st.markdown(f'**Részletes régió:** {upload_data["sub_sub_region"]}')
+    st.markdown(f'**Legpontosabb régió:** {upload_data["sub_sub_sub_region"]}')
     st.markdown(f'**Életkor: (opcionális)** {upload_data["age"]}')
     st.markdown(f'**Életkori Csoport:** {upload_data["age_group"]}')
     st.markdown(f'**Megjegyzés: (opcionális)** {upload_data["comment"]}')
