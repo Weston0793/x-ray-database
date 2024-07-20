@@ -94,6 +94,12 @@ def main():
             color: red;
             margin-bottom: 20px;
         }
+        .grand-total {
+            font-size: 26px;
+            font-weight: bold;
+            text-align: center;
+            margin-top: 20px;
+        }
         </style>
         """,
         unsafe_allow_html=True,
@@ -130,7 +136,7 @@ def main():
     else:
         grand_total_progress = 0
 
-    st.markdown(f"**Fázis 1 Státusz: {total_done}/{int(total_tasks)} ({grand_total_progress:.1f}%)**")
+    st.markdown(f'<div class="grand-total">Fázis 1 Státusz: {total_done}/{int(total_tasks)} ({grand_total_progress:.1f}%)</div>', unsafe_allow_html=True)
     st.progress(grand_total_progress / 100)
 
     # Region and subregion progress
@@ -145,23 +151,27 @@ def main():
         st.subheader(main_region)
         st.markdown(f"**{main_region} Státusz: {main_done}/{main_total_tasks} ({main_progress:.1f}%)**")
         st.progress(main_progress / 100)  # st.progress expects a value between 0 and 1
-        
-        for sub_region, view_types in sub_regions.items():
-            sub_done = sum(view_types.values())
-            sub_total_tasks = 200  # Each subregion has 200 tasks
-            if sub_total_tasks > 0:
-                sub_progress = (sub_done / sub_total_tasks) * 100
-            else:
-                sub_progress = 0
 
-            st.markdown(f"**{sub_region} Státusz: {sub_done}/{sub_total_tasks} ({sub_progress:.1f}%)**")
-            st.progress(sub_progress / 100)  # st.progress expects a value between 0 and 1
-            
-            for view_type, count in view_types.items():
-                percentage = (count / 50) * 100  # Assuming each view type within a subregion has 50 tasks
-                st.markdown(f"{view_type}: {count}/50 ({percentage:.1f}%)")
+        sub_regions_sorted = sorted(sub_regions.items(), key=lambda x: x[0])
+        grid_size = 2
+        for i in range(0, len(sub_regions_sorted), grid_size):
+            cols = st.columns(grid_size)
+            for idx, (sub_region, view_types) in enumerate(sub_regions_sorted[i:i + grid_size]):
+                with cols[idx]:
+                    sub_done = sum(view_types.values())
+                    sub_total_tasks = 200  # Each subregion has 200 tasks
+                    if sub_total_tasks > 0:
+                        sub_progress = (sub_done / sub_total_tasks) * 100
+                    else:
+                        sub_progress = 0
 
-    st.markdown('</div>', unsafe_allow_html=True)
+                    st.markdown(f"**{sub_region} Státusz: {sub_done}/{sub_total_tasks} ({sub_progress:.1f}%)**")
+                    st.progress(sub_progress / 100)  # st.progress expects a value between 0 and 1
+
+                    view_types_sorted = sorted(view_types.items(), key=lambda x: x[0])
+                    for view_type, count in view_types_sorted:
+                        percentage = (count / 50) * 100  # Assuming each view type within a subregion has 50 tasks
+                        st.markdown(f"{view_type}: {count}/50 ({percentage:.1f}%)")
 
 if __name__ == "__main__":
     main()
