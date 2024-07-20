@@ -115,12 +115,12 @@ def select_sub_subregion(sub_reg):
         "Alkar": ["", "Ulna", "Radius", "Mindkét csont", "Nightstick", "Essex-Lopresti", "Galeazzi", "Monteggia"],
         "Csukló": ["", "Distalis radius", "Distalis ulna", "Carpus"],
         "Kéz": ["", "Metacarpus", "Pollex", "Phalanx"],
-        "Pelvis": ["", "Ramus Pubicus ",  "Anterior inferior iliac csípőtövis avulsio",  "Anterior superior csípőtövis (ASIS) avulsion", "Duverney", "Malgaigne", "Windswept pelvis", "Pelvic bucket handle", "Medencei elégtelenség", "Nyitott könyv"],
+        "Pelvis": ["", "Ramus Pubicus ",  "Anterior inferior iliac csípőtövis avulsio",  "Anterior superior csípőtövis (ASIS) avulsio", "Duverney", "Malgaigne", "Windswept pelvis", "Pelvic bucket handle", "Medencei elégtelenség", "Nyitott könyv"],
         "Csípő": ["", "Acetabulum", "Femur fej", "Femur nyak", "Trochanterikus"],
         "Femur": ["", "Femur diaphysis", "Distalis femur", "Bisphosphonáthoz kapcsolódó"],
         "Térd": ["", "Avulsio", "Patella", "Tibia plateau"],
         "Lábszár": ["", "Tibialis tuberositas avulsio", "Tibia diaphysis", "Fibula diaphysis", "Maisonneuve"],
-        "Boka": ["", "Bimallleolaris", "Trimalleolaris", "Triplane", "Tillaux", "Bosworth", "Pilon", "Wagstaffe-Le Fort"],
+        "Boka": ["", "Bimalleolaris", "Trimalleolaris", "Triplane", "Tillaux", "Bosworth", "Pilon", "Wagstaffe-Le Fort"],
         "Láb": ["", "Tarsus", "Metatarsus ", "Lábujjak"]
     }
     return st.selectbox("Alrégió keresése", sub_regions.get(sub_reg, [""]))
