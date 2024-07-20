@@ -102,7 +102,10 @@ def save_comment(name, comment):
 def get_comments(start, limit):
     comments_ref = db.collection('comments').order_by('timestamp', direction=firestore.Query.DESCENDING).offset(start).limit(limit)
     docs = comments_ref.stream()
-    comments = [{'name': doc.to_dict().get('name'), 'comment': doc.to_dict().get('comment')} for doc in docs]
+    comments = [{'name': doc.to_dict().get('name'), 'comment': doc.to_dict().get('comment'), 'timestamp': doc.to_dict().get('timestamp')} for doc in docs]
+    for comment in comments:
+        if isinstance(comment['timestamp'], datetime.datetime):
+            comment['timestamp'] = comment['timestamp'].astimezone().replace(tzinfo=None)
     return comments
 
 def get_counts():
