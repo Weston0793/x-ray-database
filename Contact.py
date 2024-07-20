@@ -1,6 +1,7 @@
 import streamlit as st
 from firebase_helpers import initialize_firebase, save_comment, get_comments
 import random
+import datetime
 
 # Ensure Firebase is initialized
 initialize_firebase()
@@ -57,7 +58,8 @@ def main():
 
     if comments:
         for c in comments:
-            st.write(f"**{c['name']}**: {c['comment']}")
+            timestamp = c['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
+            st.write(f"**{c['name']}**: {c['comment']} *(Posted on: {timestamp})*")
     else:
         st.write("Nincsenek kommentek.")
 
