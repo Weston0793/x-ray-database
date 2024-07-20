@@ -28,6 +28,7 @@ def initialize_session_state():
         }
 
 def search_section():
+    style_markdown()
     initialize_session_state()
     st.markdown('<div class="search-title">Képek keresése</div>', unsafe_allow_html=True)
 
