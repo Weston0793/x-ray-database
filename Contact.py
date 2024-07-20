@@ -25,7 +25,7 @@ def main():
     - **Cím:** Department of Thermophysiology, Institute for Translational Medicine, Medical School, University of Pécs, 12 Szigeti Street, 7624 Pécs, Hungary
     """)
 
-    st.write("### Kommentek")
+    st.write("### Kommentszekció")
     
     if 'name' not in st.session_state:
         st.session_state.name = generate_funny_name()
