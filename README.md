@@ -33,7 +33,7 @@ Alternatívaként megnézheti az alkalmazás hostolt verzióját itt: [Orvosi R�
 1. Klónozza a repozitóriumot:
     ```bash
     git clone https://github.com/Weston0793/x-ray-database.git
-    cd SCHF
+    cd x-ray-database
     ```
 
 2. Telepítse a szükséges csomagokat:
