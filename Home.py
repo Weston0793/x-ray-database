@@ -25,6 +25,7 @@ def main():
     - **Több régió jelölése**: Ha több sérült régiót szeretne megadni, pipálja ki a "Több régió jelölése" opciót. Fontos: új régió hozzáadására csak mentés után van lehetőség, jelenlegi technikai korlátok miatt. Ha mentés nélkül több új régiót hozzáad, hibaüzenet fog keletkezni!
     - A választható súlyossági kategóriák folyamatosan bővülnek. A hosszú csöves csontoknál már elérhető a teljes AO klasszifikáció (a boka kívételével).
     - Kattintson a "Feltöltés" gombra a kíválasztott adatok újra összegzéséhez, majd a "Megerősítés és Feltöltés" gombbal véglegesítheti a feltöltést.
+    - Kérjük várja meg a zöld "Sikeres feltöltés" feliratot mielött új képet tölt fel. Több képnél többet kell várni.
 
     #### 2. Képek keresése
     - Válassza a "Képek keresése" menüpontot a bal oldalsáv "Navigáció" menüjéből.
