@@ -1,92 +1,55 @@
 import streamlit as st
-from home_backend import handle_file_upload, confirm_and_upload_data
-import uuid
-from helper_functions import style_markdown2, select_subregion, select_sub_subregion, select_sub_sub_subregion
-
-def initialize_home_session_state():
-    if 'confirm_data' not in st.session_state:
-        st.session_state.confirm_data = None
 
 def main():
-    initialize_home_session_state()
-    style_markdown2()
-    st.markdown('<div class="upload-title">Orvosi Röntgenkép Adatbázis</div>', unsafe_allow_html=True)
+    st.title("Üdvözöljük az Orvosi Röntgenkép Adatbázisban!")
 
-    patient_id = str(uuid.uuid4())
-    st.text_input("Beteg azonosító", patient_id, disabled=True)
+    st.markdown("""
+    ### Az alkalmazás célja
+    Az alkalmazás célja, hogy segítse az orvosi röntgenképek kezelését, feltöltését, keresését és állapotuk nyomon követését. A rendszer pontos és részletes adatokat gyűjt a röntgenképekről, hogy elősegítse az orvosi kutatást, oktatást valamint legfőképpen a traumatológiai diagnosztikai munkát, ezáltal javítva a betegek ellátását
 
-    st.markdown('<div class="file-upload-instruction">Kérem húzzon az alábbi ablakra vagy válasszon ki a fájlkezelőn keresztül egy röntgenképet (Max 15 MB)</div>', unsafe_allow_html=True)
-    uploaded_file = st.file_uploader("Fájl kiválasztása", type=["jpg", "jpeg", "png"], accept_multiple_files=False)
+    ### Funkciók
+    - **Kép feltöltése**: Új röntgenkép(ek)et tölthet fel az adatbázisba.
+    - **Képek keresése**: Kereshet az adatbázisban található röntgenképek között különböző kritériumok alapján.
+    - **Státusz**: Megtekintheti a feltöltött röntgenképek állapotát és statisztikáit.
+    - **Elérhetőség**: Kapcsolatba léphet a fejlesztőkkel.
 
-    if uploaded_file is not None:
-        uploaded_file = handle_file_upload(uploaded_file)
+    ### Használati útmutató
 
-    if uploaded_file:
-        col1, col2 = st.columns(2)
-        with col1:
-            type = st.radio("Válassza ki a típusát", ["Normál", "Törött", "Egyéb"], key="type")
-            if type == "Egyéb": 
-                type = st.selectbox("Specifikálás (Egyéb)", ["Luxatio", "Subluxatio", "Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Cysta",  "Malignus Tumor", "Benignus Tumor", "Metastasis", "Rheumatoid Arthritis","Genetikai/Veleszületett", "Egyéb"])
-                if type in ["Malignus Tumor", "Benignus Tumor", "Genetikai/Veleszületett", "Egyéb"]:
-                    type = st.text_input("Adja meg a specifikus típust (Egyéb)")
+    #### 1. Kép feltöltése
+    - Kérjük a feltöltésre szánt képekről bizonyosodjon meg hogy anonimizálva vannak! A képeken nem szerepelhet semmilyen betegazonosító!
+    - Válassza a bal oldalsáv "Navigáció" menüjéből a "Kép feltöltése" menüpontot .
+    - Adja meg a beteg azonosítóját és töltse fel a röntgenkép(ek)et (Max 15 MB).
+    - **Több kép feltöltése**: Ha egyszerre több képet szeretne feltölteni, pipálja ki a "Több kép feltöltése" lehetőséget. Figyelem: az összes kép ugyanazokat a címkéket kapja! (kivéve a betegazonosítót)
+    - Kérem, adja meg a kötelező adatokat: korcsoport, röntgen nézet, normál vagy elváltozás típusa, melyik oldal (ha végtagról van szó), és a sérült régiók (fő régió, régió).
+    - A részletesebb adatmegadás (alrégiók, komplikációk, társuló állapotok, osztályozások) nagyban segíti a kutatást és diagnosztikát.
+    - **Több régió jelölése**: Ha több sérült régiót szeretne megadni, pipálja ki a "Több régió jelölése" opciót. Fontos: új régió hozzáadására csak mentés után van lehetőség, jelenlegi technikai korlátok miatt. Ha mentés nélkül több új régiót hozzáad, hibaüzenet fog keletkezni!
+    - A választható súlyossági kategóriák folyamatosan bővülnek. A hosszú csöves csontoknál már elérhető a teljes AO klasszifikáció (a boka kívételével).
+    - Kattintson a "Feltöltés" gombra a kíválasztott adatok újra összegzéséhez, majd a "Megerősítés és Feltöltés" gombbal véglegesítheti a feltöltést.
 
-        with col2:
-            view = st.radio("Válassza ki a nézetet", ["AP", "Lateral", "Egyéb"], key="view")
-            if view == "Egyéb":
-                view = st.selectbox("Specifikálás (Egyéb Nézet)", ["Ferde", "PA", "Speciális"])
-                if view == "Speciális":
-                    view = st.text_input("Adja meg a specifikus nézetet (Speciális)")
+    #### 2. Képek keresése
+    - Válassza a "Képek keresése" menüpontot.
+    - Adja meg a keresési feltételeket (minimum: típus, nézet, főrégió).
+    - Kattintson a "Keresés" gombra. A találatok listája megtekinthető és letölthető. 
+    - Várjon egy pár másodpercet amíg a szerver összeállítja a "Letöltés" gomb megnyomása után a .zip filet, majd kattintson a "Megerősítés s Letöltés" gombra ha le kívánja tölteni a képeket és a hozzájuk tartozó címkéket. 
 
-        # Main and sub region in one row
-        col3, col4 = st.columns(2)
-        with col3:
-            main_region = st.selectbox("Fő régió", ["Felső végtag", "Alsó végtag", "Gerinc", "Koponya", "Mellkas", "Has"])
-        with col4:
-            sub_region = select_subregion(main_region)
+    #### 3. Státusz
+    - Válassza a "Státusz" menüpontot.
+    - Tekintse meg a feltöltött röntgenképek statisztikáit és a projekt aktuális fázisának állapotát.
+    - Az adatok alapján nyomon követheti a projekt előrehaladását és a hiányzó elemeket.
+    - Az első fázis lezárási kirétirumai: az összes különböző csontot tartalmazó régióból, legalább két nézetből, normál és törött röntgenképeket gyüjts felnőttektől, kombinációnként legalább 50 darabot.
+    - A második fázis a különböző alrégiók feltöltése lesz előreláhatólag.
+    - Fontos: egyelőre a státusz a gyermekkori röntgeneket is számba veszi!
 
-        # Sub-subregion and sub-sub-subregion in one row
-        col5, col6 = st.columns(2)
-        with col5:
-            sub_sub_region = select_sub_subregion(sub_region)
-        with col6:
-            sub_sub_sub_region = select_sub_sub_subregion(sub_sub_region)
+    #### 4. Elérhetőség
+    - Válassza az "Elérhetőség" menüpontot.
+    - Ha bármilyen észrevétele van a honlappal kapcsolatban, segítségre van szüksége vagy kérdése van, lépjen nyugodtan kapcsolatba a fejlesztőkkel.
 
-        if type != "Normál":
-            complications = st.multiselect("Komplikációk (többet is választhat)", ["Nyílt", "Darabos", "Avulsio", "Luxatio", "Subluxatio", "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés"])
-            associated_conditions = st.multiselect("Társuló Kórállapotok (többet is választhat)", ["Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Cysta", "Rheumatoid Arthritis",  "Metastasis", "Malignus Tumor", "Benignus Tumor", "Genetikai"])
+    ### Fontos Információk
+    - **Adatbiztonság**: Az összes feltöltött adat biztonságos és titkosított környezetben kerül tárolásra.
+    - **Frissítések és Karbantartás**: Az alkalmazás rendszeresen frissül, hogy biztosítsa a legújabb és egyre kényelmesebb funkciók és várják az ide látogatókat.
 
-        age = st.select_slider("Életkor (opcionális)", options=["NA"] + list(range(0, 121)), value="NA")
-        age_group = ""
-        if age != "NA":
-            age = int(age)
-            age_group = "Gyermek" if age <= 18 else "Felnőtt"
-
-        comment = st.text_area("Megjegyzés (opcionális)", key="comment", value="")
-
-        if st.button("Feltöltés"):
-            upload_data = {
-                "patient_id": patient_id,
-                "type": type,
-                "view": view,
-                "main_region": main_region,
-                "sub_region": sub_region if type != "Normál" else "",
-                "sub_sub_region": sub_sub_region if sub_sub_region != "NA" else "",
-                "sub_sub_sub_region": sub_sub_sub_region if sub_sub_sub_region != "NA" else "",
-                "age": age,
-                "age_group": age_group,
-                "comment": comment,
-                "file": uploaded_file,
-                "complications": complications if type != "Normál" else [],
-                "associated_conditions": associated_conditions if type != "Normál" else []
-            }
-            st.session_state.confirm_data = upload_data
-            st.experimental_rerun()
-
-        if st.session_state.confirm_data:
-            confirm_and_upload_data(st.session_state.confirm_data)
-
-    if st.experimental_get_query_params().get("scroll_to") == ["confirmation"]:
-        st.markdown('<script>window.scrollTo(0, document.body.scrollHeight);</script>', unsafe_allow_html=True)
+    Köszönjük, hogy használja az alkalmazásunkat!
+    """)
 
 if __name__ == "__main__":
     main()
