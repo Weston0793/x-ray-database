@@ -4,7 +4,13 @@ from firebase_helpers import db, create_zip
 import uuid
 from google.api_core.exceptions import GoogleAPICallError
 from search_backend import perform_search
-from helper_functions import style_markdown, select_subregion, select_sub_subregion, select_sub_sub_subregion
+from helper_functions import (
+    select_main_type, select_view, select_main_region, select_subregion, 
+    select_sub_subregion, select_sub_sub_subregion, select_sub_sub_sub_subregion, 
+    select_complications, select_associated_conditions,
+    ao_classification, neer_classification, gartland_classification
+)
+from Styles import search_markdown
 
 def initialize_session_state():
     if 'search_button_clicked' not in st.session_state:
@@ -12,84 +18,95 @@ def initialize_session_state():
     if 'query_params' not in st.session_state:
         st.session_state.query_params = {
             "search_button_clicked": False,
-            "type": "",
+            "main_type": "",
+            "sub_type": "",
+            "sub_sub_type": "",
             "view": "",
+            "sub_view": "",
+            "sub_sub_view": "",
             "main_region": "",
             "sub_region": "",
             "sub_sub_region": "",
             "sub_sub_sub_region": "",
+            "sub_sub_sub_sub_region": "",
             "complications": [],
             "associated_conditions": [],
             "age_filter_active": False,
             "age": "",
             "age_group": "",
             "page": 1,
-            "items_per_page": 10
+            "items_per_page": 10,
+            "classifications": {}
         }
 
 def search_section():
-    style_markdown()
     initialize_session_state()
+    search_markdown()
     st.markdown('<div class="search-title">Képek keresése</div>', unsafe_allow_html=True)
-
-    types = ["", "Normál", "Törött", "Egyéb"]
-    sub_types = ["Luxatio", "Subluxatio", "Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Cysta", "Malignus Tumor", "Benignus Tumor", "Metastasis", "Rheumatoid Arthritis", "Genetikai/Veleszületett", "Egyéb"]
-    views = ["", "AP", "Lateral", "Ferde", "PA", "Speciális"]
-    regions = ["", "Felső végtag", "Alsó végtag", "Gerinc", "Koponya", "Mellkas", "Has"]
 
     col1, col2 = st.columns(2)
     with col1:
-        if st.session_state.query_params["type"] not in types and st.session_state.query_params["type"] not in sub_types:
-            st.session_state.query_params["type"] = types[0]
-        search_type = st.selectbox("Típus keresése", types, index=types.index(st.session_state.query_params["type"]) if st.session_state.query_params["type"] in types else 0)
-        if search_type == "Egyéb": 
-            specific_type = st.selectbox("Specifikálás (Egyéb)", sub_types)
-            if specific_type == "Egyéb":
-                specific_type = st.text_input("Adja meg a specifikus típust (Egyéb)")
-            search_type = specific_type
+        main_type, sub_type, sub_sub_type = select_main_type()
     with col2:
-        if st.session_state.query_params["view"] not in views:
-            st.session_state.query_params["view"] = views[0]
-        search_view = st.selectbox("Nézet keresése", views, index=views.index(st.session_state.query_params["view"]))
+        view, sub_view, sub_sub_view = select_view()
 
     col3, col4 = st.columns(2)
     with col3:
-        if st.session_state.query_params["main_region"] not in regions:
-            st.session_state.query_params["main_region"] = regions[0]
-        search_main_region = st.selectbox("Fő régió keresése", regions, index=regions.index(st.session_state.query_params["main_region"]))
+        main_region = select_main_region()
     with col4:
-        search_sub_region = select_subregion(search_main_region)
+        sub_region = select_subregion(main_region)
 
-    col5, col6 = st.columns(2)
+    col5, col6, col7 = st.columns(3)
     with col5:
-        search_sub_sub_region = select_sub_subregion(search_sub_region)
+        sub_sub_region = select_sub_subregion(sub_region)
     with col6:
-        search_sub_sub_sub_region = select_sub_sub_subregion(search_sub_sub_region)
+        sub_sub_sub_region = select_sub_sub_subregion(sub_sub_region)
+    with col7:
+        sub_sub_sub_sub_region = select_sub_sub_sub_subregion(sub_sub_sub_region)
 
-    search_complications = st.multiselect("Komplikációk keresése", ["Nyílt", "Darabos", "Avulsio", "Luxatio", "Subluxatio", "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés"], default=st.session_state.query_params["complications"])
-    search_associated_conditions = st.multiselect("Társuló Kórállapotok keresése", ["Osteoarthritis", "Osteoporosis", "Osteomyelitis", "Rheumatoid Arthritis", "Cysta", "Metastasis", "Malignus Tumor", "Benignus Tumor", "Genetikai"], default=st.session_state.query_params["associated_conditions"])
+    st.markdown("### Osztályozás kiválasztása")
+    classification_types = st.multiselect("Válassza ki az osztályozás típusát", ["AO", "Gartland", "Neer"])
+    
+    classifications = {}
+    if "AO" in classification_types:
+        ao_name, ao_severity, ao_subseverity = ao_classification(sub_sub_region)
+        if ao_name and ao_severity and ao_subseverity:
+            classifications["AO"] = {"name": ao_name, "severity": ao_severity, "subseverity": ao_subseverity}
+    
+    if "Gartland" in classification_types:
+        gartland_name, gartland_severity, gartland_description = gartland_classification()
+        if gartland_name and gartland_severity:
+            classifications["Gartland"] = {"name": gartland_name, "severity": gartland_severity, "description": gartland_description}
+    
+    if "Neer" in classification_types:
+        neer_name, neer_severity, neer_description = neer_classification(sub_sub_region)
+        if neer_name and neer_severity:
+            classifications["Neer"] = {"name": neer_name, "severity": neer_severity, "description": neer_description}
+
+    complications = select_complications()
+    associated_conditions = select_associated_conditions()
 
     age_filter_active = st.checkbox("Életkor keresése (intervallum)", value=st.session_state.query_params["age_filter_active"])
-    search_age_group = st.selectbox("Életkori csoport keresése", ["", "Gyermek", "Felnőtt"], index=["", "Gyermek", "Felnőtt"].index(st.session_state.query_params["age_group"]))
+    age_group = st.selectbox("Életkori csoport keresése", ["", "Gyermek", "Felnőtt"], index=["", "Gyermek", "Felnőtt"].index(st.session_state.query_params["age_group"]))
 
     if age_filter_active:
-        if search_age_group == "Gyermek":
-            search_age = st.slider("Életkor keresése (intervallum)", min_value=0, max_value=18, value=(0, 18), step=1, format="%d")
-        elif search_age_group == "Felnőtt":
-            search_age = st.slider("Életkor keresése (intervallum)", min_value=19, max_value=120, value=(19, 120), step=1, format="%d")
+        if age_group == "Gyermek":
+            age = st.slider("Életkor keresése (intervallum)", min_value=0, max_value=18, value=(0, 18), step=1, format="%d")
+        elif age_group == "Felnőtt":
+            age = st.slider("Életkor keresése (intervallum)", min_value=19, max_value=120, value=(19, 120), step=1, format="%d")
         else:
             try:
                 age_value = eval(st.session_state.query_params["age"]) if st.session_state.query_params["age"] else (0, 120)
             except ValueError:
                 age_value = (0, 120)
-            search_age = st.slider("Életkor keresése (intervallum)", min_value=0, max_value=120, value=age_value, step=1, format="%d")
+            age = st.slider("Életkor keresése (intervallum)", min_value=0, max_value=120, value=age_value, step=1, format="%d")
     else:
-        search_age = None
+        age = None
 
-    col7, col8 = st.columns(2)
-    with col7:
+    col9, col10 = st.columns(2)
+    with col9:
         page = st.number_input("Oldal", min_value=1, step=1, value=st.session_state.query_params["page"])
-    with col8:
+    with col10:
         items_per_page = st.selectbox("Találatok száma oldalanként", options=[10, 25, 50, 100], index=[10, 25, 50, 100].index(st.session_state.query_params["items_per_page"]))
 
     search_button_clicked = st.button("Keresés", key="search_button")
@@ -99,19 +116,25 @@ def search_section():
         st.session_state.search_button_clicked = True
         st.session_state.query_params = {
             "search_button_clicked": True,
-            "type": search_type,
-            "view": search_view,
-            "main_region": search_main_region,
-            "sub_region": search_sub_region,
-            "sub_sub_region": search_sub_sub_region,
-            "sub_sub_sub_region": search_sub_sub_sub_region,
-            "complications": search_complications,
-            "associated_conditions": search_associated_conditions,
+            "main_type": main_type,
+            "sub_type": sub_type,
+            "sub_sub_type": sub_sub_type,
+            "view": view,
+            "sub_view": sub_view,
+            "sub_sub_view": sub_sub_view,
+            "main_region": main_region,
+            "sub_region": sub_region,
+            "sub_sub_region": sub_sub_region,
+            "sub_sub_sub_region": sub_sub_sub_region,
+            "sub_sub_sub_sub_region": sub_sub_sub_sub_region,
+            "complications": complications,
+            "associated_conditions": associated_conditions,
             "age_filter_active": age_filter_active,
-            "age": str(search_age) if search_age else "",
-            "age_group": search_age_group,
+            "age": str(age) if age else "",
+            "age_group": age_group,
             "page": page,
-            "items_per_page": items_per_page
+            "items_per_page": items_per_page,
+            "classifications": classifications
         }
         st.experimental_rerun()
 
