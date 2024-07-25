@@ -1,5 +1,5 @@
 import streamlit as st
-from home_backend import handle_file_upload, confirm_and_upload_data
+from upload_backend import handle_file_upload, confirm_and_upload_data
 import uuid
 from helper_functions import (
     select_main_type, select_view, select_main_region, 
@@ -8,7 +8,7 @@ from helper_functions import (
     select_associated_conditions, ao_classification, neer_classification, gartland_classification
 )
 from Styles import upload_markdown
-from functions import (
+from upload_functions import (
     initialize_home_session_state, reset_session_state,
     display_region, display_images
 )
