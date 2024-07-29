@@ -136,7 +136,7 @@ def search_section():
             "items_per_page": items_per_page,
             "classifications": classifications
         }
-        st.experimental_rerun()
+        st.rerun()
 
     if st.session_state.search_button_clicked:
         perform_search(st.session_state.query_params)
