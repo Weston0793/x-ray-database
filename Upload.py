@@ -75,7 +75,7 @@ def main():
                 st.session_state.regions.append(new_region)
                 st.success("Új régió hozzáadva")
                 st.session_state.new_region_blocked = True
-                st.experimental_rerun()
+                st.rerun()
             elif st.session_state.new_region_blocked:
                 st.error("Mentse a jelenlegi régiót mielőtt újat hozna létre.")
 
@@ -91,16 +91,16 @@ def main():
                     if st.button(f"Régió {idx + 1} mentése", key=f"save_region_{idx}"):
                         region['editable'] = False
                         st.session_state.new_region_blocked = False
-                        st.experimental_rerun()
+                        st.rerun()
             with col_region_save_modify_delete[1]:
                 if not region['editable']:
                     if st.button(f"Régió {idx + 1} módosítása", key=f"modify_region_{idx}"):
                         region['editable'] = True
-                        st.experimental_rerun()
+                        st.rerun()
             with col_region_save_modify_delete[2]:
                 if st.button(f"Régió {idx + 1} törlése", key=f"delete_region_{idx}"):
                     st.session_state.regions.pop(idx)
-                    st.experimental_rerun()
+                    st.rerun()
 
         sub_sub_region = region.get('sub_sub_region', None)
         
@@ -162,7 +162,7 @@ def main():
             }
             st.session_state.confirm_data = upload_data
             st.success("Adatok sikeresen mentve. Kérem erősítse meg a feltöltést.")
-            st.experimental_rerun()
+            st.rerun()
         except Exception as e:
             st.error(f"Hiba történt a mentés során: {e}")
 
@@ -175,7 +175,7 @@ def main():
     if st.button("Reset"):
         reset_session_state()
         st.session_state.file_uploader_key = str(uuid.uuid4())
-        st.experimental_rerun()
+        st.rerun()
 
 if __name__ == "__main__":
     main()
