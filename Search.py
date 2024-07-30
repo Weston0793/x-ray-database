@@ -5,7 +5,7 @@ import uuid
 from google.api_core.exceptions import GoogleAPICallError
 from search_backend import perform_search
 from helper_functions import (
-    select_main_type, select_view, select_main_region, select_subregion, 
+    select_main_type, select_view, select_gender, select_main_region, select_subregion, 
     select_sub_subregion, select_sub_sub_subregion, select_sub_sub_sub_subregion, 
     select_complications, select_associated_conditions,
     ao_classification, neer_classification, gartland_classification
@@ -24,6 +24,7 @@ def initialize_session_state():
             "view": "",
             "sub_view": "",
             "sub_sub_view": "",
+            "gender": "",
             "main_region": "",
             "sub_region": "",
             "sub_sub_region": "",
@@ -44,28 +45,29 @@ def search_section():
     search_markdown()
     st.markdown('<div class="search-title">Képek keresése</div>', unsafe_allow_html=True)
 
-    col1, col2 = st.columns(2)
+    col1, col2, col3 = st.columns(3)
     with col1:
         main_type, sub_type, sub_sub_type = select_main_type()
     with col2:
         view, sub_view, sub_sub_view = select_view()
-
-    col3, col4 = st.columns(2)
     with col3:
-        main_region = select_main_region()
+        gender = select_gender()
+
+    col4, col5 = st.columns(2)
     with col4:
+        main_region = select_main_region()
+    with col5:
         sub_region = select_subregion(main_region)
 
-    col5, col6, col7 = st.columns(3)
-    with col5:
-        sub_sub_region = select_sub_subregion(sub_region)
+    col6, col7, col8 = st.columns(3)
     with col6:
-        sub_sub_sub_region = select_sub_sub_subregion(sub_sub_region)
+        sub_sub_region = select_sub_subregion(sub_region)
     with col7:
+        sub_sub_sub_region = select_sub_sub_subregion(sub_sub_region)
+    with col8:
         sub_sub_sub_sub_region = select_sub_sub_sub_subregion(sub_sub_sub_region)
 
-    st.markdown("### Osztályozás kiválasztása")
-    classification_types = st.multiselect("Válassza ki az osztályozás típusát", ["AO", "Gartland", "Neer"])
+    classification_types = st.multiselect("Válassza ki az osztályozás típusát (többet is választhat)", ["AO", "Gartland", "Neer"])
     
     classifications = {}
     if "AO" in classification_types:
@@ -103,10 +105,10 @@ def search_section():
     else:
         age = None
 
-    col9, col10 = st.columns(2)
-    with col9:
-        page = st.number_input("Oldal", min_value=1, step=1, value=st.session_state.query_params["page"])
+    col10, col11 = st.columns(2)
     with col10:
+        page = st.number_input("Oldal", min_value=1, step=1, value=st.session_state.query_params["page"])
+    with col11:
         items_per_page = st.selectbox("Találatok száma oldalanként", options=[10, 25, 50, 100], index=[10, 25, 50, 100].index(st.session_state.query_params["items_per_page"]))
 
     search_button_clicked = st.button("Keresés", key="search_button")
@@ -122,6 +124,7 @@ def search_section():
             "view": view,
             "sub_view": sub_view,
             "sub_sub_view": sub_sub_view,
+            "gender": gender,
             "main_region": main_region,
             "sub_region": sub_region,
             "sub_sub_region": sub_sub_region,
@@ -136,7 +139,7 @@ def search_section():
             "items_per_page": items_per_page,
             "classifications": classifications
         }
-        st.rerun()
+        st.experimental_rerun()
 
     if st.session_state.search_button_clicked:
         perform_search(st.session_state.query_params)

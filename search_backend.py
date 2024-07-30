@@ -11,6 +11,7 @@ def perform_search(query_params):
     search_view = query_params.get("view", "")
     search_sub_view = query_params.get("sub_view", "")
     search_sub_sub_view = query_params.get("sub_sub_view", "")
+    search_gender = query_params.get("gender", "")
     search_main_region = query_params.get("main_region", "")
     search_sub_region = query_params.get("sub_region", "")
     search_sub_sub_region = query_params.get("sub_sub_region", "")
@@ -41,6 +42,8 @@ def perform_search(query_params):
         query_filters.append(('sub_view', '==', search_sub_view))
     if search_sub_sub_view:
         query_filters.append(('sub_sub_view', '==', search_sub_sub_view))
+    if search_gender:
+        query_filters.append(('gender', '==', search_gender))
     if search_complications:
         for complication in search_complications:
             query_filters.append(('complications', 'array_contains', complication))
@@ -94,17 +97,17 @@ def perform_search(query_params):
 
             st.write(f"Összesen {total_docs} találat. Oldal: {page} / {total_pages}")
 
-            col7, col8 = st.columns(2)
-            with col7:
+            col10, col11 = st.columns(2)
+            with col10:
                 if page > 1:
                     if st.button("Előző oldal", key="prev_page"):
                         st.session_state.query_params.update(page=page-1)
-                        st.experimental_rerun()
-            with col8:
+                        st.rerun()
+            with col11:
                 if page < total_pages:
                     if st.button("Következő oldal", key="next_page"):
                         st.session_state.query_params.update(page=page+1)
-                        st.experimental_rerun()
+                        st.rerun()
 
             st.markdown('<div class="button-container">', unsafe_allow_html=True)
             if st.button("Összes találat letöltése ZIP-ben"):
@@ -157,33 +160,33 @@ def display_data(data):
 
 def format_data(data):
     def format_field(label, value):
-        return f"**{label}:** {value}<br>" if value not in [None, 'N/A', [], ''] else ""
+        return f"**{label}:** {value}" if value not in [None, 'N/A', [], ''] else ""
 
-    display_data = f"""
-    {format_field('Típus', data.get('main_type'))}
-    {format_field('Specifikus típus', data.get('sub_type'))}
-    {format_field('Legspecifikusabb típus', data.get('sub_sub_type'))}
-    {format_field('Nézet', data.get('view'))}
-    {format_field('Specifikus nézet', data.get('sub_view'))}
-    {format_field('Legspecifikusabb nézet', data.get('sub_sub_view'))}
-    {format_field('Életkor', data.get('age'))}
-    {format_field('Életkori csoport', data.get('age_group'))}
-    {format_field('Megjegyzés', data.get('comment'))}
-    {format_field('Komplikációk', ", ".join(data.get('complications', [])))}
-    {format_field('Társuló Kórállapotok', ", ".join(data.get('associated_conditions', [])))}
-    """
+    display_data = "\n".join([
+        format_field('Típus', data.get('main_type')),
+        format_field('Nézet', data.get('view')),
+        format_field('Életkor', data.get('age')),
+        format_field('Életkori csoport', data.get('age_group')),
+    ])
+
     for idx, region in enumerate(data.get('regions', [])):
-        display_data += f"\n**Régió {idx + 1}:**\n"
-        display_data += f"{format_field('Fő régió', region.get('main_region'))}"
-        display_data += f"{format_field('Régió', region.get('sub_region'))}"
-        display_data += f"{format_field('Alrégió', region.get('sub_sub_region'))}"
-        display_data += f"{format_field('Részletes régió', region.get('sub_sub_sub_region'))}"
-        display_data += f"{format_field('Legrészletesebb régió', region.get('sub_sub_sub_sub_region'))}"
+        region_data = "\n".join([
+            f"**Régió {idx + 1}:**",
+            format_field('Fő régió', region.get('main_region')),
+            format_field('Régió', region.get('sub_region')),
+            format_field('Alrégió', region.get('sub_sub_region')),
+            format_field('Részletes régió', region.get('sub_sub_sub_region')),
+            format_field('Legrészletesebb régió', region.get('sub_sub_sub_sub_region')),
+        ])
+        display_data += f"\n\n{region_data}"
         if 'classification' in region:
             for class_type, class_details in region['classification'].items():
-                display_data += f"**{class_type} osztályozás:**\n"
-                display_data += f"{format_field('Név', class_details.get('name'))}"
-                display_data += f"{format_field('Súlyosság', class_details.get('severity'))}"
-                display_data += f"{format_field('Alsúlyosság', class_details.get('subseverity'))}"
+                classification_data = "\n".join([
+                    f"**{class_type} osztályozás:**",
+                    format_field('Név', class_details.get('name')),
+                    format_field('Főkategória', class_details.get('severity')),
+                    format_field('Alkategória', class_details.get('subseverity')),
+                ])
+                display_data += f"\n{classification_data}"
 
-    return display_data.replace("<br>", "\n")
+    return display_data

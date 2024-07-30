@@ -4,14 +4,71 @@ def select_main_type():
     main_type = st.radio("Válassza ki a típusát", ["Normál", "Törött", "Egyéb"], key="main_type")
     sub_type = ""
     sub_sub_type = ""
+    
     if main_type == "Egyéb":
         sub_type = st.selectbox("Specifikálás (Egyéb)", [
             "Luxatio", "Subluxatio", "Szalagszakadás", "Osteoarthritis", "Osteoporosis", 
-            "Osteomyelitis", "Cysta", "Álízűlet", "Malignus Tumor", "Benignus Tumor", 
+            "Osteomyelitis", "Cysta", "Álízület", "Vérzés", "Tumor", 
             "Metastasis", "Rheumatoid Arthritis", "Genetikai/Veleszületett", "Implant", "Egyéb"
         ])
-        if sub_type in ["Malignus Tumor", "Benignus Tumor", "Genetikai/Veleszületett", "Egyéb"]:
+        
+        if sub_type == "Tumor":
+            tumor_type = st.selectbox("Válassza ki a daganat típusát", [
+                "Chondrogen daganatok", "Osteogen daganatok", "Fibrogen daganatok", "Vascularis daganatok",
+                "Osteoclastikus óriássejtdús daganatok", "Notokordiális daganatok", "Egyéb mesenchymalis daganatok",
+                "Haematopoeticus daganatok"
+            ])
+            
+            sub_type = tumor_type  # Update sub_type to be the selected tumor category
+            
+            if tumor_type == "Chondrogen daganatok":
+                sub_sub_type = st.selectbox("Válassza ki a specifikus típust (Chondrogen daganatok)", [
+                    "Osteochondroma", "Periostealis chondroma", "Enchondroma", "Chondromyxoid fibroma",
+                    "Osteochondromyxoma", "Subungualis exostosis", "Bizarr parostealis osteochondromatos proliferáció",
+                    "Synovialis chondromatosis", "Chondroblastoma", "Centrális atípusos chondrogén tumor / chondrosarcoma (1. fokozat)",
+                    "Szekunder perifériás atípusos chondrogén tumor / chondrosarcoma (1. fokozat)",
+                    "Centrális chondrosarcoma (2-3. fokozat)", "Szekunder chondrosarcoma (2-3. fokozat)",
+                    "Periostealis chondrosarcoma", "Dedifferenciált chondrosarcoma", "Mesenchymalis chondrosarcoma",
+                    "Tiszta sejtes chondrosarcoma"
+                ])
+            elif tumor_type == "Osteogen daganatok":
+                sub_sub_type = st.selectbox("Válassza ki a specifikus típust (Osteogen daganatok)", [
+                    "Osteoma", "Osteoid osteoma", "Osteoblastoma", "Alacsony fokozatú centrális osteosarcoma",
+                    "Osteosarcoma", "Konvencionális osteosarcoma", "Telangiectaticus osteosarcoma",
+                    "Kis sejtes osteosarcoma", "Parostealis osteosarcoma", "Periostealis osteosarcoma",
+                    "Magas fokozatú felszíni osteosarcoma", "Szekunder osteosarcoma"
+                ])
+            elif tumor_type == "Fibrogen daganatok":
+                sub_sub_type = st.selectbox("Válassza ki a specifikus típust (Fibrogen daganatok)", [
+                    "Desmoplasticus fibroma csontban", "Fibrosarcoma csontban"
+                ])
+            elif tumor_type == "Vascularis daganatok":
+                sub_sub_type = st.selectbox("Válassza ki a specifikus típust (Vascularis daganatok)", [
+                    "Haemangioma", "Epithelioid haemangioma", "Epithelioid haemangioendothelioma", "Angiosarcoma"
+                ])
+            elif tumor_type == "Osteoclastikus óriássejtdús daganatok":
+                sub_sub_type = st.selectbox("Válassza ki a specifikus típust (Osteoclastikus óriássejtdús daganatok)", [
+                    "Aneurizmás csont ciszta", "Óriássejtes daganat csontban", "Nem csontosodó fibroma"
+                ])
+            elif tumor_type == "Notokordiális daganatok":
+                sub_sub_type = st.selectbox("Válassza ki a specifikus típust (Notokordiális daganatok)", [
+                    "Jóindulatú notokordiális sejt tumor", "Chordoma", "Dedifferenciált chordoma", "Gyengén differenciált chordoma"
+                ])
+            elif tumor_type == "Egyéb mesenchymalis daganatok":
+                sub_sub_type = st.selectbox("Válassza ki a specifikus típust (Egyéb mesenchymalis daganatok)", [
+                    "Chondromesenchymalis hamartoma", "Osteofibrosus dysplasia", "Adamantinoma",
+                    "Egyszerű csont ciszta", "Fibrocartilaginous mesenchymoma", "Fibrosus dysplasia",
+                    "Lipoma csontban", "Liposarcoma", "Leiomyosarcoma", "Nem differenciált pleomorf sarcoma",
+                    "Csont metastasis"
+                ])
+            elif tumor_type == "Haematopoeticus daganatok":
+                sub_sub_type = st.selectbox("Válassza ki a specifikus típust (Haematopoeticus daganatok)", [
+                    "Solitaris plasmacytoma csontban", "Primer non-Hodgkin lymphoma csontban", "Langerhans sejt histiocytosis",
+                    "Erdheim-Chester betegség", "Rosai-Dorfman betegség"
+                ])
+        elif sub_type == "Genetikai/Veleszületett" or sub_type == "Egyéb":
             sub_sub_type = st.text_input("Adja meg a specifikus típust (Egyéb)")
+
     return main_type, sub_type, sub_sub_type
 
 def select_view():
@@ -24,6 +81,10 @@ def select_view():
             sub_sub_view = st.text_input("Adja meg a specifikus nézetet (Speciális)")
     return view, sub_view, sub_sub_view
 
+def select_gender():
+    gender = st.radio("Nem", ["", "Férfi", "Nő"], key="gender")
+    return gender
+    
 def select_main_region():
     main_region = st.selectbox("Fő régió", ["Felső végtag", "Alsó végtag", "Gerinc", "Koponya", "Mellkas", "Has"])
     return main_region
@@ -32,7 +93,7 @@ def select_complications():
     complications = st.multiselect("Komplikációk (többet is választhat)", [
         "Elmozdulás", "Intraarticularis", "Nyílt", "Fragmentált", "Avulsio", "Luxatio", "Subluxatio", 
         "Idegsérülés", "Nagyobb Érsérülés", "Szalagszakadás", 
-        "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés"
+        "Meniscus Sérülés", "Epiphysis Sérülés", "Fertőzés",
     ])
     return complications
 
@@ -48,10 +109,10 @@ def select_subregion(main_reg):
     regions = {
         "Felső végtag": ["", "Váll", "Humerus", "Könyök", "Alkar", "Csukló", "Kéz"],
         "Alsó végtag": ["", "Medence", "Csípő", "Femur", "Térd", "Lábszár", "Boka", "Láb"],
-        "Gerinc": ["", "Cervicalis", "Thoracalis", "Lumbaris", "Sacralis", "Coccygealis"],
-        "Koponya": ["", "Arckoponya", "Agykoponya", "Mandibula"],
-        "Mellkas": ["", "Borda", "Sternum", "Tüdő", "Szív"],
-        "Has": ["", "Máj", "Lép", "Vese", "Bél", "Hólyag"]
+        "Gerinc": ["", "Cervicalis", "Thoracalis", "Lumbalis", "Sacrum", "Coccyx"],
+        "Koponya": ["", "Arckoponya", "Mandibula", "Calvaria", "Koponyaalap", "Fog"],
+        "Mellkas": ["", "Borda", "Sternum", "Tüdő", "Szív", "Mell"],
+        "Has": ["", "Máj", "Epehólyag", "Pancreas", "Lép", "Vese", "Húgyhólyag", "Gyomor", "Vékonybél", "Vastagbél" ]
     }
     return st.selectbox("Régió", regions.get(main_reg, [""]))
 
@@ -63,13 +124,21 @@ def select_sub_subregion(sub_reg):
         "Alkar": ["", "Ulna diaphysis", "Radius diaphysis", "Mindkét csont", "Nightstick", "Essex-Lopresti", "Galeazzi", "Monteggia"],
         "Csukló": ["", "Distalis radius", "Distalis ulna", "Carpus"],
         "Kéz": ["", "Metacarpus", "Pollex", "Phalanx"],
-        "Pelvis": ["", "Ramus Pubicus ",  "Anterior inferior csípőtövis avulsio",  "Anterior superior csípőtövis (ASIS) avulsio", "Duverney", "Malgaigne", "Windswept pelvis", "Pelvic bucket handle", "Medencei elégtelenség", "Nyitott könyv"],
-        "Csípő": ["", "Acetabulum", "Proximalis femur", "Femur fej", "Femur nyak", "Trochanterikus"],
-        "Femur": ["", "Femur diaphysis", "Distalis femur", "Bisphosphonáthoz kapcsolódó"],
-        "Térd": ["", "Avulsio", "Patella",  "Proximalis tibia", "Proximalis fibula"],
+        "Pelvis": ["", "Ramus pubicus",  "Anterior inferior csípőtövis avulsio",  "Anterior superior csípőtövis avulsio", "Duverney", "Malgaigne", "Windswept pelvis", "Pelvic bucket handle", "Medencei elégtelenség", "Nyitott könyv"],
+        "Csípő": ["", "Acetabulum", "Proximalis femur"],
+        "Femur": ["", "Femur diaphysis",  "Bisphosphonáthoz kapcsolódó"],
+        "Térd": ["", "Distalis femur", "Avulsio", "Patella",  "Proximalis tibia", "Proximalis fibula"],
         "Lábszár": ["", "Tibia diaphysis", "Fibula diaphysis", "Tuberositas tibiae avulsio", "Maisonneuve"],
         "Boka": ["", "Distalis tibia", "Distalis fibula", "Bimalleolaris", "Trimalleolaris", "Triplane", "Tillaux", "Bosworth", "Pilon", "Wagstaffe-Le Fort"],
-        "Láb": ["", "Tarsus", "Metatarsus", "Hallux", "Lábujjak"]
+        "Láb": ["", "Tarsus", "Metatarsus", "Hallux", "Lábujjak"],
+        "Cervicalis": ["", "C1-Atlas", "C2-Axis", "C3", "C4", "C5", "C6", "C7"],
+        "Thoracalis": ["", "T1", "T2", "T3", "T4", "T5", "T6", "T7", "T8", "T9", "T10", "T11", "T12"],
+        "Lumbalis": ["", "L1", "L2", "L3", "L4", "L5"],   
+        "Arckoponya": ["", " Orrcsont", "Orbita", "Zygomaticum", "Arcus zygomaticus", "Processus alveolaris", "Panfacialis"], 
+        "Mandibula": ["", "Corpus mandibulae", "Symphysis", "Szemfogtájék", "Szemfog és angulus között", "Angulus mandibulae", "Ramus mandibulae", "Processus articularis", "Processus muscularis"],  
+        "Calvaria": ["", "Frontale", "Parietale", "Temporale", "Occipitale"], 
+        "Koponyaalap": ["","Condylus occipitalis", "Fossa anterior", "Fossa mediale", "Fossa posterior"],
+        "Fog": ["","Szemfog", "Metszőfog", "Kisörlő", "Nagyörlő"]
     }
     return st.selectbox("Alrégió", sub_regions.get(sub_reg, [""]))
     
@@ -87,11 +156,20 @@ def select_sub_sub_subregion(sub_sub_reg):
         "Metacarpus": ["",  "Boxer", "Fordított Bennett"],
         "Pollex": ["", "Distalis phalanx", "Proximalis phalanx", "Gamekeeper's Thumb", "Epibasal", "Rolando", "Bennett"],
         "Phalanx": ["", "Distalis phalanx", "Középső phalanx", "Proximalis phalanx"],
+        "Proximalis femur": ["", "Femur fej", "Femur nyak", "Trochanterikus"],
         "Avulsio": ["", "Lig. cruciatum anterior avulsio", " Lig. cruciatum posterior avulsio", "Arcuatus komplex avulsio (arcuatus jel)", "Biceps femoris avulsio", "Lig. iliotibiale avulsio", "Semimembranosus tendon avulsio","Segond", "Fordított Segond", "Stieda (MCL avulsion fracture)"],
         "Proximalis tibia": ["", "Tibia plateau"],
         "Proximalis fibula": ["", "Fibula fej", "Fibula nyak"],
         "Tarsus": ["", "Chopart", "Calcaneus", "Talus", "Naviculare", "Medialis cuneiformis", "Középső cuneiformis", "Lateral cuneiformis", "Cuboideum"],
-        "Metatarsus": ["", "March", "Lisfranc törés-luxatio", "V. metatarsus stressz törés", "Jones", "Pseudo-Jones", "V. metatarsus proximalis avulsio"]
+        "Metatarsus": ["", "March", "Lisfranc törés-luxatio", "V. metatarsus stressz törés", "Jones", "Pseudo-Jones", "V. metatarsus proximalis avulsio"],
+        "C1-Atlas": ["","Jefferson"],
+        "C2-Axis": ["", "Dens axis", "Csigolyatest", "Hangman"],
+        "Panfacialis": ["", "Le Fort I", "Le Fort II", "Le Fort III", "Naso-orbito-ethmoidalis"],
+        "Processus articularis": ["", "Extracapsularis", "Intracapsularis"],
+        "Szemfog": ["", "Korona", "Gyökér"], 
+        "Metszőfog": ["", "Korona", "Gyökér"], 
+        "Kisörlő": ["", "Korona", "Gyökér"], 
+        "Nagyörlő": ["", "Korona", "Gyökér"] 
     }
     return st.selectbox("Részletes régió", sub_sub_regions.get(sub_sub_reg, [""]))
 
@@ -113,9 +191,10 @@ def select_sub_sub_sub_subregion(sub_sub_sub_reg):
         "Trochanterikus": ["", "Pertrochanterikus", "Intertrochanterikus", "Subtrochanterikus"],
         "Calcaneus": ["", "Lover's", "Calcaneus tuberositas avulsio"],
         "Talus": ["", "Talus fej", "Talus test", "Talus nyak", "Talus kupola", "Posterior talus processus", "Lateralis talus processus", "Aviator astragalus"],
-        "Cuboideum": ["","Nutcracker"],
+        "Cuboideum": ["", "Nutcracker"],
+        "Dens axis": ["", "Dens csúcs", "Dens basis", "Csigolyatestre terjedő"]
     }
-    return st.selectbox("Legrészletes régió", sub_sub_sub_regions.get(sub_sub_sub_reg, [""]))  
+    return st.selectbox("Legpontosabb régió", sub_sub_sub_regions.get(sub_sub_sub_reg, [""]))  
     
 def select_finger(sub_sub_regions):
     side = st.selectbox("Oldal", ["Bal", "Jobb"])

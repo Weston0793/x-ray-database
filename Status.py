@@ -51,8 +51,7 @@ def main():
         else:
             main_progress = 0
 
-        st.subheader(main_region)
-        st.markdown(f"**{main_region} Státusz: {main_done}/{main_total_tasks} ({main_progress:.1f}%)**")
+        st.markdown(f'<div class="subheader">{main_region} Státusz: {main_done}/{main_total_tasks} ({main_progress:.1f}%)</div>', unsafe_allow_html=True)
         st.progress(main_progress / 100)  # st.progress expects a value between 0 and 1
 
         sub_regions_sorted = sorted(sub_regions.items(), key=lambda x: x[0])
@@ -68,13 +67,13 @@ def main():
                     else:
                         sub_progress = 0
 
-                    st.markdown(f"**{sub_region} Státusz: {sub_done}/{sub_total_tasks} ({sub_progress:.1f}%)**")
+                    st.markdown(f"<div class='subsubheader'>{sub_region} Státusz: {sub_done}/{sub_total_tasks} ({sub_progress:.1f}%)</div>", unsafe_allow_html=True)
                     st.progress(sub_progress / 100)  # st.progress expects a value between 0 and 1
 
                     view_types_sorted = sorted(view_types.items(), key=lambda x: x[0])
                     for view_type, count in view_types_sorted:
                         percentage = (count / 50) * 100  # Assuming each view type within a subregion has 50 tasks
-                        st.markdown(f"{view_type}: {count}/50 ({percentage:.1f}%)")
+                        st.markdown(f"<div class='content'>{view_type}: {count}/50 ({percentage:.1f}%)</div>", unsafe_allow_html=True)
 
 if __name__ == "__main__":
     main()

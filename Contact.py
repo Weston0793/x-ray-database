@@ -2,6 +2,7 @@ import streamlit as st
 from firebase_helpers import initialize_firebase, save_comment, get_comments
 import random
 import datetime
+from Styles import contact_background
 
 # Ensure Firebase is initialized
 initialize_firebase()
@@ -16,16 +17,19 @@ def generate_funny_name():
     return f"{random.choice(first_parts)} {random.choice(second_parts)}"
 
 def main():
-    st.title("Elérhetőség")
+    contact_background()
+    
+    st.markdown('<h1 class="title">Elérhetőség</h1>', unsafe_allow_html=True)
 
-    st.write("""
-    ### Kapcsolat
-    - **Email:** aba.lorincz@gmail.com
-    - **Telefon:** +36 30 954 2176
-    - **Cím:** Department of Thermophysiology, Institute for Translational Medicine, Medical School, University of Pécs, 12 Szigeti Street, 7624 Pécs, Hungary
-    """)
+    st.markdown("""
+    <div class="content">
+        <p><strong>Email:</strong> aba.lorincz@gmail.com</p>
+        <p><strong>Telefon:</strong> +36 30 954 2176</p>
+        <p><strong>Cím:</strong> Thermophysiologia Tanszék, Transzlációs Medicina Intézet, Általános Orvostudományi Kar, Pécsi Tudományegyetem, Szigeti utca 12, 7624 Pécs, Hungary</p>
+    </div>
+    """, unsafe_allow_html=True)
 
-    st.write("### Kommentszekció")
+    st.markdown('<h2 class="subheader">Kommentszekció</h2>', unsafe_allow_html=True)
     
     if 'name' not in st.session_state:
         st.session_state.name = generate_funny_name()
@@ -35,20 +39,21 @@ def main():
         name = st.text_input("Név", value=st.session_state.name)
     with col2:
         if st.button("Új nevet kérek!"):
-            st.session_state.name = generate_funny_name()
-            name = st.session_state.name
+            with st.spinner('Generating a new name...'):
+                st.session_state.name = generate_funny_name()
+                name = st.session_state.name
 
     comment = st.text_area("Komment")
 
     if st.button("Küldés"):
         if comment:
-            save_comment(name, comment)
-            st.success("Köszönjük a hozzászólást!")
+            with st.spinner('Saving your comment...'):
+                save_comment(name, comment)
+            st.success("Köszönjük a hozzászólást!", icon="✅")
         else:
-            st.error("A komment mező nem lehet üres!")
+            st.error("A komment mező nem lehet üres!", icon="❌")
 
-    # Display last comments with navigation
-    st.write("### Legutóbbi Kommentek")
+    st.markdown('<h3 class="subsubheader">Legutóbbi Kommentek</h3>', unsafe_allow_html=True)
     
     if 'page' not in st.session_state:
         st.session_state.page = 0
@@ -59,7 +64,7 @@ def main():
     if comments:
         for c in comments:
             timestamp = c['timestamp'].strftime("%Y-%m-%d %H:%M:%S")
-            st.write(f"**{c['name']}**: {c['comment']} *(Posted on: {timestamp})*")
+            st.markdown(f"<div class='content'><strong>{c['name']}</strong>: {c['comment']} <em>(Posted on: {timestamp})</em></div>", unsafe_allow_html=True)
     else:
         st.write("Nincsenek kommentek.")
 

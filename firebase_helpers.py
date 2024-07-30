@@ -46,7 +46,7 @@ def download_from_storage(source_blob_name, destination_file_name):
     blob.download_to_filename(destination_file_name)
 
 # Save image and metadata to Firestore and Firebase Storage
-def save_image(patient_id, files, main_type, sub_type, sub_sub_type, view, sub_view, sub_sub_view, age, age_group, comment, complications, associated_conditions, regions):
+def save_image(patient_id, files, main_type, sub_type, sub_sub_type, view, sub_view, sub_sub_view, age, age_group, gender, comment, complications, associated_conditions, regions):
     db = firestore.client()
     for file in files:
         filename = file.name
@@ -68,6 +68,7 @@ def save_image(patient_id, files, main_type, sub_type, sub_sub_type, view, sub_v
             'view': view,
             'sub_view': sub_view,
             'sub_sub_view': sub_sub_view,
+            'gender': gender,
             'age': age,
             'age_group': age_group,
             'comment': comment,
@@ -118,8 +119,8 @@ def get_counts():
     counts = {
         "Felső végtag": {"Váll": {}, "Humerus": {}, "Könyök": {}, "Alkar": {}, "Csukló": {}, "Kéz": {}},
         "Alsó végtag": {"Medence": {}, "Pelvis": {}, "Femur": {}, "Térd": {}, "Lábszár": {}, "Boka": {}, "Láb": {}},
-        "Gerinc": {"Cervicalis": {}, "Thoracalis": {}, "Lumbaris": {}, "Sacralis": {}, "Coccygealis": {}},
-        "Koponya": {"Arckoponya": {}, "Agykoponya": {}, "Mandibula": {}},
+        "Gerinc": {"Cervicalis": {}, "Thoracalis": {}, "Lumbalis": {}, "Sacrum": {}, "Coccyx": {}},
+        "Koponya": {"Arckoponya": {}, "Koponyaalap": {}, "Mandibula": {}, "Calvaria":{}},
         "Mellkas": {"Borda": {}, "Sternum": {}},
     }
     views = ["AP", "Lateral"]
