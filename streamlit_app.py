@@ -8,12 +8,13 @@ from Home import main as home
 
 app = MultiPage()
 
-# Add all your applications (pages) here
-app.add_page("Főoldal", home)
-app.add_page("Kép feltöltése", upload)
-app.add_page("Képek keresése", search)
-app.add_page("Státusz", status)
-app.add_page("Elérhetőség", contact)
+# Add all your applications (pages) here with emojis as icons
+app.add_page("Főoldal", home, icon="🏠")
+app.add_page("Kép feltöltése", upload, icon="📤")
+app.add_page("Képek keresése", search, icon="🔍")
+app.add_page("Státusz", status, icon="📊")
+app.add_page("Elérhetőség", contact, icon="✉️")
 
 # The main app
-app.run()
+if __name__ == '__main__':
+      app.run()
